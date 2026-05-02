@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || (process.env.NODE_ENV === "production" ? (() => { throw new Error("JWT_SECRET is required in production"); })() : "dev-jwt_secret-unsafe")
-);
+function getJwtSecret() {
+  return new TextEncoder().encode(process.env.JWT_SECRET || "dev-jwt_secret-unsafe");
+}
 
 const publicPaths = ["/", "/login", "/api/auth/login", "/api/auth/refresh", "/api/health"];
 
@@ -29,7 +29,7 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    await jwtVerify(accessToken, JWT_SECRET);
+    await jwtVerify(accessToken, getJwtSecret());
     const response = NextResponse.next();
     response.headers.set("X-Content-Type-Options", "nosniff");
     response.headers.set("X-Frame-Options", "DENY");

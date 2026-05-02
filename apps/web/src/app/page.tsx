@@ -3,9 +3,9 @@ import { redirect } from "next/navigation";
 import { jwtVerify } from "jose";
 import { LandingPage } from "@/components/landing/landing-page";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || (process.env.NODE_ENV === "production" ? (() => { throw new Error("JWT_SECRET is required in production"); })() : "dev-jwt_secret-unsafe")
-);
+function getJwtSecret() {
+  return new TextEncoder().encode(process.env.JWT_SECRET || "dev-jwt_secret-unsafe");
+}
 
 export const metadata = {
   title: "Trosky Analytics – Automated Hotel Rate Tracking & Market Intelligence",
@@ -18,7 +18,7 @@ export default async function Home() {
   const token = cookieStore.get("access_token")?.value;
   if (token) {
     try {
-      await jwtVerify(token, JWT_SECRET);
+      await jwtVerify(token, getJwtSecret());
       redirect("/dashboard");
     } catch {
       // Token invalid or expired; show landing

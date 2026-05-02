@@ -2,19 +2,19 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import type { JWTPayload } from "@hotel-pricing/shared";
 
-function requireEnv(name: string): string {
+function getSecret(name: string): Uint8Array {
   const value = process.env[name];
   if (!value) {
-    if (process.env.NODE_ENV === "production") {
+    if (process.env.NODE_ENV === "production" && typeof window === "undefined" && !process.env.NEXT_PHASE) {
       throw new Error(`Missing required environment variable: ${name}`);
     }
-    return `dev-${name.toLowerCase()}-unsafe`;
+    return new TextEncoder().encode(`dev-${name.toLowerCase()}-unsafe`);
   }
-  return value;
+  return new TextEncoder().encode(value);
 }
 
-const JWT_SECRET = new TextEncoder().encode(requireEnv("JWT_SECRET"));
-const JWT_REFRESH_SECRET = new TextEncoder().encode(requireEnv("JWT_REFRESH_SECRET"));
+function getJwtSecret() { return getSecret("getJwtSecret()"); }
+function getJwtRefreshSecret() { return getSecret("getJwtRefreshSecret()"); }
 
 const ACCESS_TOKEN_TTL = "15m";
 const REFRESH_TOKEN_TTL = "7d";
@@ -28,7 +28,7 @@ export async function createAccessToken(payload: {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(ACCESS_TOKEN_TTL)
-    .sign(JWT_SECRET);
+    .sign(getJwtSecret());
 }
 
 export async function createRefreshToken(payload: {
@@ -38,14 +38,14 @@ export async function createRefreshToken(payload: {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(REFRESH_TOKEN_TTL)
-    .sign(JWT_REFRESH_SECRET);
+    .sign(getJwtRefreshSecret());
 }
 
 export async function verifyAccessToken(
   token: string
 ): Promise<JWTPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const { payload } = await jwtVerify(token, getJwtSecret());
     return payload as unknown as JWTPayload;
   } catch {
     return null;
@@ -56,7 +56,7 @@ export async function verifyRefreshToken(
   token: string
 ): Promise<{ sub: string } | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_REFRESH_SECRET);
+    const { payload } = await jwtVerify(token, getJwtRefreshSecret());
     return payload as unknown as { sub: string };
   } catch {
     return null;
