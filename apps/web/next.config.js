@@ -1,4 +1,8 @@
+const path = require("path");
 const { PrismaPlugin } = require("@prisma/nextjs-monorepo-workaround-plugin");
+
+// Monorepo: Next.js only auto-loads `.env*` from `apps/web`. Repo secrets live at root.
+require("dotenv").config({ path: path.join(__dirname, "..", "..", ".env") });
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {

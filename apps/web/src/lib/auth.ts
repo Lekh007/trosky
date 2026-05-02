@@ -1,20 +1,10 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import type { JWTPayload } from "@hotel-pricing/shared";
-
-function getSecret(name: string): Uint8Array {
-  const value = process.env[name];
-  if (!value) {
-    if (process.env.NODE_ENV === "production" && typeof window === "undefined" && !process.env.NEXT_PHASE) {
-      throw new Error(`Missing required environment variable: ${name}`);
-    }
-    return new TextEncoder().encode(`dev-${name.toLowerCase()}-unsafe`);
-  }
-  return new TextEncoder().encode(value);
-}
-
-function getJwtSecret() { return getSecret("getJwtSecret()"); }
-function getJwtRefreshSecret() { return getSecret("getJwtRefreshSecret()"); }
+import {
+  jwtAccessSecretBytes,
+  jwtRefreshSecretBytes,
+} from "@/lib/jwt-secrets";
 
 const ACCESS_TOKEN_TTL = "15m";
 const REFRESH_TOKEN_TTL = "7d";
@@ -28,7 +18,7 @@ export async function createAccessToken(payload: {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(ACCESS_TOKEN_TTL)
-    .sign(getJwtSecret());
+    .sign(jwtAccessSecretBytes());
 }
 
 export async function createRefreshToken(payload: {
@@ -38,14 +28,14 @@ export async function createRefreshToken(payload: {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(REFRESH_TOKEN_TTL)
-    .sign(getJwtRefreshSecret());
+    .sign(jwtRefreshSecretBytes());
 }
 
 export async function verifyAccessToken(
   token: string
 ): Promise<JWTPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, getJwtSecret());
+    const { payload } = await jwtVerify(token, jwtAccessSecretBytes());
     return payload as unknown as JWTPayload;
   } catch {
     return null;
@@ -56,38 +46,11 @@ export async function verifyRefreshToken(
   token: string
 ): Promise<{ sub: string } | null> {
   try {
-    const { payload } = await jwtVerify(token, getJwtRefreshSecret());
+    const { payload } = await jwtVerify(token, jwtRefreshSecretBytes());
     return payload as unknown as { sub: string };
   } catch {
     return null;
   }
-}
-
-export async function setAuthCookies(
-  accessToken: string,
-  refreshToken: string
-) {
-  const cookieStore = await cookies();
-  cookieStore.set("access_token", accessToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 15 * 60,
-  });
-  cookieStore.set("refresh_token", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 7 * 24 * 60 * 60,
-  });
-}
-
-export async function clearAuthCookies() {
-  const cookieStore = await cookies();
-  cookieStore.delete("access_token");
-  cookieStore.delete("refresh_token");
 }
 
 export async function getSession(): Promise<JWTPayload | null> {

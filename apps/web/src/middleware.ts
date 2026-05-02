@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
-
-function getJwtSecret() {
-  return new TextEncoder().encode(process.env.JWT_SECRET || "dev-jwt_secret-unsafe");
-}
+import { jwtAccessSecretBytes } from "@/lib/jwt-secrets";
 
 const publicPaths = ["/", "/login", "/api/auth/login", "/api/auth/refresh", "/api/health"];
 
@@ -29,7 +26,7 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    await jwtVerify(accessToken, getJwtSecret());
+    await jwtVerify(accessToken, jwtAccessSecretBytes());
     const response = NextResponse.next();
     response.headers.set("X-Content-Type-Options", "nosniff");
     response.headers.set("X-Frame-Options", "DENY");

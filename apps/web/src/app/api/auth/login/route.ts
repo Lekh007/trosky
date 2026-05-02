@@ -6,14 +6,8 @@ import {
   createAccessToken,
   createRefreshToken,
 } from "@/lib/auth";
+import { attachAuthSessionCookies } from "@/lib/auth-cookies";
 import { checkRateLimit } from "@/lib/rate-limiter";
-
-const COOKIE_OPTS = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "lax" as const,
-  path: "/",
-};
 
 export async function POST(request: NextRequest) {
   const ip = request.headers.get("x-forwarded-for") || "unknown";
@@ -75,14 +69,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    response.cookies.set("access_token", accessToken, {
-      ...COOKIE_OPTS,
-      maxAge: 15 * 60,
-    });
-    response.cookies.set("refresh_token", refreshToken, {
-      ...COOKIE_OPTS,
-      maxAge: 7 * 24 * 60 * 60,
-    });
+    attachAuthSessionCookies(response, accessToken, refreshToken);
 
     return response;
   } catch (error) {

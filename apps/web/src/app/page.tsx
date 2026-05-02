@@ -2,10 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { jwtVerify } from "jose";
 import { LandingPage } from "@/components/landing/landing-page";
-
-function getJwtSecret() {
-  return new TextEncoder().encode(process.env.JWT_SECRET || "dev-jwt_secret-unsafe");
-}
+import { jwtAccessSecretBytes } from "@/lib/jwt-secrets";
 
 export const metadata = {
   title: "Trosky Analytics – Automated Hotel Rate Tracking & Market Intelligence",
@@ -18,7 +15,7 @@ export default async function Home() {
   const token = cookieStore.get("access_token")?.value;
   if (token) {
     try {
-      await jwtVerify(token, getJwtSecret());
+      await jwtVerify(token, jwtAccessSecretBytes());
       redirect("/dashboard");
     } catch {
       // Token invalid or expired; show landing

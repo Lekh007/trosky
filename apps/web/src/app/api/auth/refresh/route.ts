@@ -4,8 +4,8 @@ import {
   verifyRefreshToken,
   createAccessToken,
   createRefreshToken,
-  setAuthCookies,
 } from "@/lib/auth";
+import { attachAuthSessionCookies } from "@/lib/auth-cookies";
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,9 +36,7 @@ export async function POST(request: NextRequest) {
     });
     const refreshToken = await createRefreshToken({ sub: user.id });
 
-    await setAuthCookies(accessToken, refreshToken);
-
-    return NextResponse.json({
+    const response = NextResponse.json({
       user: {
         id: user.id,
         email: user.email,
@@ -46,6 +44,8 @@ export async function POST(request: NextRequest) {
         name: user.name,
       },
     });
+    attachAuthSessionCookies(response, accessToken, refreshToken);
+    return response;
   } catch {
     return NextResponse.json({ error: "Token refresh failed" }, { status: 401 });
   }
