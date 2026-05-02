@@ -1,29 +1,16 @@
-# How to launch Trosky
+# Quick launch — Trosky
 
-You need **PostgreSQL** and **Redis** running somewhere. Your `.env` currently points to `localhost:5432` and `localhost:6379`, which require Docker (or local Postgres/Redis).
+Get the app running in under 5 minutes.
 
 ---
 
-## Option 1: With Docker (easiest if you install it)
-
-1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) and start it.
-2. In the project folder run:
+## Option 1: Docker (easiest)
 
 ```bash
-cd "/Volumes/T7/Dev/AI HOTEL PRICING"
+# Start PostgreSQL + Redis
 docker compose up -d
-```
 
-3. Then either use the launch script:
-
-```bash
-chmod +x scripts/launch.sh
-./scripts/launch.sh
-```
-
-   **or** run the steps yourself:
-
-```bash
+# Install, migrate, seed, and run
 pnpm install
 pnpm --filter @hotel-pricing/db exec prisma generate
 pnpm --filter @hotel-pricing/db exec prisma migrate dev --name init
@@ -31,42 +18,61 @@ pnpm db:seed
 pnpm --filter @hotel-pricing/web dev
 ```
 
-4. Open **http://localhost:3000** and log in with **analyst@example.com** / **Password123!**
+Or use the launch script: `chmod +x scripts/launch.sh && ./scripts/launch.sh`
 
 ---
 
-## Option 2: Without Docker (free hosted DB + Redis)
+## Option 2: Hosted (no Docker)
 
-1. **PostgreSQL** — Sign up at [Neon](https://neon.tech), create a project, copy the connection string.
-2. **Redis** — Sign up at [Upstash](https://upstash.com), create a Redis database, copy the Redis URL.
-3. Edit `.env` in the project root and set:
-   - `DATABASE_URL` = your Neon connection string
-   - `REDIS_URL` = your Upstash Redis URL
-   - Keep `JWT_SECRET` and `JWT_REFRESH_SECRET` (or set any long random strings)
-4. Run the launch script:
+1. **PostgreSQL** — [Neon](https://neon.tech) free tier. Create a project, copy the connection string.
+2. **Redis** — [Upstash](https://upstash.com) free tier. Create a database, copy the URL.
+3. Edit `.env`:
+   ```
+   DATABASE_URL=<your Neon connection string>
+   REDIS_URL=<your Upstash URL>
+   JWT_SECRET=<any long random string>
+   JWT_REFRESH_SECRET=<any long random string>
+   ```
+4. Run the same install/migrate/seed/dev commands from Option 1.
+
+---
+
+## Log in
+
+Open **http://localhost:3000** and use:
+
+| Role | Email | Password |
+|------|-------|----------|
+| Analyst (full access) | analyst@example.com | Password123! |
+| Client (read-only) | client@example.com | Password123! |
+
+---
+
+## What you'll see
+
+- **Dashboard** — Overview cards and hotel list (analyst) or your hotel (client)
+- **Hotel dashboard** — Rate matrix, calendar, 7-day forecast, competitor cards, summary KPIs
+- **Day detail modal** — Pricing, competitors, occupancy, ADR/revenue, events/promotions
+- **Occupancy** — Bulk edit next 30 days (analyst)
+- **Pace** — OTB vs last year + STR-like ADR index
+- **Events** — Manual events + external signal management
+- **Messages** — Threaded messaging per hotel
+- **Portfolio** — Cross-hotel KPI overview (analyst)
+- **Promotions** — Create and manage promotions (analyst)
+- **Scrape admin** — Run scrape now, view history (analyst, worker optional)
+
+---
+
+## Optional: run the worker
+
+The worker processes scrape jobs and recomputes recommendations. Not needed for basic browsing.
 
 ```bash
-cd "/Volumes/T7/Dev/AI HOTEL PRICING"
-chmod +x scripts/launch.sh
-./scripts/launch.sh
+pnpm --filter @hotel-pricing/worker dev
 ```
-
-   **or** run the same commands as in Option 1 step 3 (without Docker).
-
-5. Open **http://localhost:3000** and log in with **analyst@example.com** / **Password123!**
 
 ---
 
-## What you’ll see
+## Troubleshooting
 
-- **Login** — Email/password, demo accounts listed.
-- **Dashboard** — Overview cards and hotel list (analyst) or redirect to your hotel (client).
-- **Hotel dashboard** — Summary cards (today’s rate, recommended, occupancy, etc.), **Rate Matrix** (dates × our hotel + competitors, chart below), **Calendar** (month tiles, click for day detail).
-- **Day detail modal** — Pricing, competitors, occupancy, ADR/revenue, events/promotions.
-- **Occupancy** (analyst) — Bulk edit next 30 days.
-- **Pace** — OTB vs last year chart and STR-like index.
-- **Promotions** (analyst) — CRUD.
-- **Hotel settings** (analyst) — General, competitors, rate plans.
-- **Scrape admin** (analyst) — Run scrape now, view runs (worker optional).
-
-Worker is only needed for “Run scrape now”; the UI works without it.
+See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for common issues.
