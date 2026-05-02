@@ -1,9 +1,27 @@
 "use server";
 
 import { prisma } from "@hotel-pricing/db";
-import { createHotelSchema, updateHotelSchema, competitorSchema, hotelCompetitorSchema } from "@hotel-pricing/shared";
+import { createHotelSchema } from "@hotel-pricing/shared";
 import { requireAnalyst, requireHotelAccess } from "@/lib/rbac";
 import { revalidatePath } from "next/cache";
+
+function assertRateBounds(minRate?: number | null, maxRate?: number | null) {
+  if (minRate !== null && minRate !== undefined && minRate <= 0) {
+    throw new Error("Minimum rate must be greater than 0.");
+  }
+  if (maxRate !== null && maxRate !== undefined && maxRate <= 0) {
+    throw new Error("Maximum rate must be greater than 0.");
+  }
+  if (
+    minRate !== null &&
+    minRate !== undefined &&
+    maxRate !== null &&
+    maxRate !== undefined &&
+    minRate > maxRate
+  ) {
+    throw new Error("Maximum rate must be higher than the minimum rate.");
+  }
+}
 
 export async function getHotels() {
   const { getSession } = await import("@/lib/auth");
@@ -49,6 +67,7 @@ export async function createHotel(formData: FormData) {
     maxRate: raw.maxRate ? Number(raw.maxRate) : undefined,
     occTarget: raw.occTarget ? Number(raw.occTarget) : undefined,
   });
+  assertRateBounds(data.minRate, data.maxRate);
 
   const hotel = await prisma.hotel.create({
     data: {
@@ -95,6 +114,13 @@ export async function updateHotel(data: {
   occTarget?: number | null;
 }) {
   await requireAnalyst();
+  assertRateBounds(data.minRate, data.maxRate);
+  if (data.roomCount !== undefined && (!Number.isInteger(data.roomCount) || data.roomCount <= 0)) {
+    throw new Error("Room count must be a whole number greater than 0.");
+  }
+  if (data.occTarget !== undefined && data.occTarget !== null && (data.occTarget < 0 || data.occTarget > 100)) {
+    throw new Error("Occupancy target must be between 0 and 100.");
+  }
   const hotel = await prisma.hotel.update({
     where: { id: data.id },
     data: {

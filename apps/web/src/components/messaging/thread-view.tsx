@@ -22,6 +22,7 @@ interface ThreadViewProps {
   currentUserId: string;
   isAnalyst: boolean;
   onBack: () => void;
+  onThreadChange?: (thread: MessageThreadSummary) => void;
 }
 
 export function ThreadView({
@@ -30,6 +31,7 @@ export function ThreadView({
   currentUserId,
   isAnalyst,
   onBack,
+  onThreadChange,
 }: ThreadViewProps) {
   const [thread, setThread] = useState<MessageThreadSummary | null>(null);
   const [messages, setMessages] = useState<MessageItem[]>([]);
@@ -38,6 +40,25 @@ export function ThreadView({
   const [loading, setLoading] = useState(!!threadId);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  function summarizeThread(
+    threadSummary: MessageThreadSummary,
+    threadMessages: MessageItem[]
+  ): MessageThreadSummary {
+    const lastMessage = threadMessages[threadMessages.length - 1] || null;
+    return {
+      ...threadSummary,
+      updatedAt: lastMessage?.createdAt || threadSummary.updatedAt,
+      lastMessage: lastMessage
+        ? {
+            body: lastMessage.body,
+            senderName: lastMessage.senderName,
+            createdAt: lastMessage.createdAt,
+          }
+        : threadSummary.lastMessage,
+      unreadCount: 0,
+    };
+  }
+
   useEffect(() => {
     if (threadId) {
       setLoading(true);
@@ -45,6 +66,7 @@ export function ThreadView({
         .then((data) => {
           setThread(data.thread);
           setMessages(data.messages);
+          onThreadChange?.(summarizeThread(data.thread, data.messages));
         })
         .catch(() => {
           toast({ title: "Error loading thread", variant: "destructive" });
@@ -58,13 +80,13 @@ export function ThreadView({
   }, [messages]);
 
   async function handleSend() {
-    if (!body.trim()) return;
+    if (!body.trim() || sending) return;
     setSending(true);
     try {
       const targetHotelId = thread?.hotelId || hotelId;
       if (!targetHotelId) return;
       const result = await sendMessage({
-        threadId: threadId || undefined,
+        threadId: thread?.id || threadId || undefined,
         hotelId: targetHotelId,
         body: body.trim(),
       });
@@ -74,6 +96,7 @@ export function ThreadView({
         const data = await getThread(result.threadId);
         setThread(data.thread);
         setMessages(data.messages);
+        onThreadChange?.(summarizeThread(data.thread, data.messages));
       }
     } catch (e: any) {
       toast({ title: "Send failed", description: e.message, variant: "destructive" });
@@ -83,9 +106,14 @@ export function ThreadView({
   }
 
   async function handleResolve() {
-    if (!threadId) return;
+    const activeThreadId = thread?.id || threadId;
+    if (!activeThreadId) return;
     try {
-      await resolveThread(threadId);
+      await resolveThread(activeThreadId);
+      const data = await getThread(activeThreadId);
+      setThread(data.thread);
+      setMessages(data.messages);
+      onThreadChange?.(summarizeThread(data.thread, data.messages));
       toast({ title: "Thread resolved" });
       onBack();
     } catch (e: any) {
@@ -94,12 +122,15 @@ export function ThreadView({
   }
 
   async function handleReopen() {
-    if (!threadId) return;
+    const activeThreadId = thread?.id || threadId;
+    if (!activeThreadId) return;
     try {
-      await reopenThread(threadId);
+      await reopenThread(activeThreadId);
       toast({ title: "Thread reopened" });
-      const data = await getThread(threadId);
+      const data = await getThread(activeThreadId);
       setThread(data.thread);
+      setMessages(data.messages);
+      onThreadChange?.(summarizeThread(data.thread, data.messages));
     } catch (e: any) {
       toast({ title: "Error", description: e.message, variant: "destructive" });
     }
@@ -125,7 +156,7 @@ export function ThreadView({
             )}
           </div>
         </div>
-        {isAnalyst && threadId && (
+        {isAnalyst && (thread?.id || threadId) && (
           <div>
             {thread?.resolvedAt ? (
               <Button

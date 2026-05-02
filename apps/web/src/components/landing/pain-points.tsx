@@ -30,7 +30,7 @@ const points = [
 
 export function PainPoints() {
   return (
-    <SectionWrapper className="landing-bg-elevated px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+    <SectionWrapper id="problem" className="landing-bg-elevated px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
       <div className="mx-auto max-w-6xl">
         <h2 className="text-center text-2xl font-bold tracking-tight landing-text sm:text-3xl md:text-4xl">
           The Status Quo Is Costing You Revenue

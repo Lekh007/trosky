@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, Save } from "lucide-react";
+import { Building2, Download, Save } from "lucide-react";
 import { bulkUpsertOccupancy } from "@/actions/occupancy";
 import { toast } from "@/hooks/use-toast";
 
@@ -47,6 +47,7 @@ export function OccupancyEditor({ hotels, initialHotelId, initialData }: Occupan
     return map;
   });
   const [saving, setSaving] = useState(false);
+  const hasHotels = hotels.length > 0;
 
   function updateEntry(date: string, field: keyof OccEntry, value: string) {
     setEntries((prev) => {
@@ -92,14 +93,14 @@ export function OccupancyEditor({ hotels, initialHotelId, initialData }: Occupan
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Occupancy Management</h1>
           <p className="text-muted-foreground">Enter and manage occupancy data for next 30 days</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Select value={hotelId} onValueChange={setHotelId}>
-            <SelectTrigger className="w-[300px]">
+            <SelectTrigger className="w-full sm:w-[300px]">
               <SelectValue placeholder="Select hotel" />
             </SelectTrigger>
             <SelectContent>
@@ -108,16 +109,25 @@ export function OccupancyEditor({ hotels, initialHotelId, initialData }: Occupan
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm" onClick={handleExportCSV}>
+          <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={!hasHotels}>
             <Download className="mr-2 h-4 w-4" />CSV
           </Button>
-          <Button size="sm" onClick={handleSave} disabled={saving}>
+          <Button size="sm" onClick={handleSave} disabled={saving || !hasHotels}>
             <Save className="mr-2 h-4 w-4" />
             {saving ? "Saving..." : "Save All"}
           </Button>
         </div>
       </div>
 
+      {!hasHotels ? (
+        <div className="rounded-lg border-2 border-dashed p-10 text-center">
+          <Building2 className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
+          <p className="text-sm font-medium">No active hotels available</p>
+          <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+            Occupancy entries can be added once an active hotel exists.
+          </p>
+        </div>
+      ) : (
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -138,8 +148,10 @@ export function OccupancyEditor({ hotels, initialHotelId, initialData }: Occupan
                   const label = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
                   const isWeekend = d.getUTCDay() === 0 || d.getUTCDay() === 6;
                   return (
-                    <tr key={date} className={`border-b ${isWeekend ? "bg-blue-50/30" : ""}`}>
-                      <td className="sticky left-0 bg-white px-4 py-2 text-xs font-medium">{label}</td>
+                    <tr key={date} className={`border-b ${isWeekend ? "bg-primary/5" : ""}`}>
+                      <th scope="row" className="sticky left-0 bg-background px-4 py-2 text-left text-xs font-medium">
+                        <time dateTime={date}>{label}</time>
+                      </th>
                       <td className="px-3 py-1">
                         <Input type="number" className="h-8 text-center text-xs w-20 mx-auto" value={entry.occPercent ?? ""} onChange={(e) => updateEntry(date, "occPercent", e.target.value)} min={0} max={100} />
                       </td>
@@ -160,6 +172,7 @@ export function OccupancyEditor({ hotels, initialHotelId, initialData }: Occupan
           </div>
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }

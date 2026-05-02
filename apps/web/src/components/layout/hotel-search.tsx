@@ -102,6 +102,14 @@ export function HotelSearch({ onSelect }: HotelSearchProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div ref={containerRef} className="relative w-full max-w-sm">
       <div className="relative">

@@ -36,6 +36,22 @@ export function MessageInbox({
   const [showNewThread, setShowNewThread] = useState(false);
 
   const selectedHotelId = hotels[0]?.id;
+  const updateThread = (updatedThread: MessageThreadSummary) => {
+    setThreads((prev) => {
+      const existingIndex = prev.findIndex((thread) => thread.id === updatedThread.id);
+      const next =
+        existingIndex === -1
+          ? [updatedThread, ...prev]
+          : prev.map((thread) =>
+              thread.id === updatedThread.id ? updatedThread : thread
+            );
+
+      return next.sort(
+        (a, b) =>
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      );
+    });
+  };
 
   if (selectedThread) {
     return (
@@ -45,8 +61,8 @@ export function MessageInbox({
         isAnalyst={isAnalyst}
         onBack={() => {
           setSelectedThread(null);
-          window.location.reload();
         }}
+        onThreadChange={updateThread}
       />
     );
   }
@@ -60,8 +76,8 @@ export function MessageInbox({
         isAnalyst={isAnalyst}
         onBack={() => {
           setShowNewThread(false);
-          window.location.reload();
         }}
+        onThreadChange={updateThread}
       />
     );
   }

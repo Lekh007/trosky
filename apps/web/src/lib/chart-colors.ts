@@ -1,0 +1,20 @@
+export const chartColors = {
+  grid: "hsl(var(--chart-grid))",
+  axis: "hsl(var(--chart-axis))",
+  primary: "hsl(var(--chart-primary))",
+  comparison: "hsl(var(--chart-comparison))",
+  recommended: "hsl(var(--chart-recommended))",
+  occupancy: "hsl(var(--chart-occupancy))",
+  warning: "hsl(var(--chart-warning))",
+  surface: "hsl(var(--popover))",
+  foreground: "hsl(var(--popover-foreground))",
+  series: [
+    "hsl(var(--chart-series-1))",
+    "hsl(var(--chart-series-2))",
+    "hsl(var(--chart-series-3))",
+    "hsl(var(--chart-series-4))",
+    "hsl(var(--chart-series-5))",
+    "hsl(var(--chart-series-6))",
+    "hsl(var(--chart-series-7))",
+  ],
+};

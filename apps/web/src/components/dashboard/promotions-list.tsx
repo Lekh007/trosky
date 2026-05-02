@@ -45,11 +45,24 @@ export function PromotionsList({ promotions: initialPromos, hotels }: Promotions
     if (!form.title || !form.startDate || !form.endDate) return;
     setSaving(true);
     try {
-      await createPromotion(form);
+      const promotion = await createPromotion(form);
+      const hotelName = hotels.find((hotel) => hotel.id === form.hotelId)?.name || "";
+      setPromotions((prev) => [
+        {
+          id: promotion.id,
+          hotelId: form.hotelId,
+          title: form.title,
+          description: form.description || null,
+          startDate: new Date(form.startDate + "T00:00:00"),
+          endDate: new Date(form.endDate + "T00:00:00"),
+          terms: form.terms || null,
+          hotel: { name: hotelName },
+        },
+        ...prev,
+      ]);
       toast({ title: "Promotion created" });
       setOpen(false);
       setForm({ hotelId: hotels[0]?.id || "", title: "", description: "", startDate: "", endDate: "", terms: "" });
-      window.location.reload();
     } catch (e: any) {
       toast({ title: "Error", description: e.message, variant: "destructive" });
     } finally {

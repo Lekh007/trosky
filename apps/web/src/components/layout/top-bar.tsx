@@ -12,6 +12,7 @@ import {
 import { HotelSearch } from "./hotel-search";
 import { Plus, RefreshCw, User, LogOut, Clock } from "lucide-react";
 import Link from "next/link";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 interface TopBarProps {
   user: { email: string; role: string; name?: string };
@@ -51,7 +52,7 @@ export function TopBar({
   }
 
   return (
-    <header className="flex h-14 items-center justify-between gap-4 border-b bg-white px-4 lg:px-6">
+    <header className="flex h-14 items-center justify-between gap-4 border-b bg-background px-4 lg:px-6">
       {/* Left section */}
       <div className="flex items-center gap-3 flex-1 min-w-0">
         {isAnalyst ? (
@@ -98,6 +99,8 @@ export function TopBar({
             </Link>
           </Button>
         )}
+
+        <ThemeToggle />
 
         {/* User menu */}
         <DropdownMenu>

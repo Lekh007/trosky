@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -85,6 +85,7 @@ export function OverviewDashboard({
   );
   const [view, setView] = useState<string>("overview");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadOverviewData = useCallback(async () => {
     setOverviewLoading(true);
@@ -128,6 +129,14 @@ export function OverviewDashboard({
     }
   }, [view, loadAdvancedData]);
 
+  useEffect(() => {
+    return () => {
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+    };
+  }, []);
+
   async function handleRefresh() {
     setIsRefreshing(true);
     try {
@@ -137,7 +146,13 @@ export function OverviewDashboard({
       );
       if (res.ok) {
         toast({ title: "Refresh started", description: "Data will update shortly." });
-        setTimeout(() => loadOverviewData(), 3000);
+        if (refreshTimeoutRef.current) {
+          clearTimeout(refreshTimeoutRef.current);
+        }
+        refreshTimeoutRef.current = setTimeout(() => {
+          loadOverviewData();
+          refreshTimeoutRef.current = null;
+        }, 3000);
       } else {
         toast({
           title: "Refresh failed",

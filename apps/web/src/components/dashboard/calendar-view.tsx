@@ -74,7 +74,7 @@ export function CalendarView({ days, onDayClick }: CalendarViewProps) {
   });
 
   return (
-    <div className="border rounded-lg bg-white">
+    <div className="border rounded-lg bg-card">
       <div className="flex items-center justify-between p-4 border-b">
         <Button variant="ghost" size="icon" onClick={() => setMonthOffset((p) => p - 1)}>
           <ChevronLeft className="h-4 w-4" />
@@ -109,30 +109,38 @@ export function CalendarView({ days, onDayClick }: CalendarViewProps) {
               className={cn(
                 "min-h-[100px] border-b border-r p-2 cursor-pointer hover:bg-accent/50 transition-colors relative",
                 !hasData && "bg-muted/10",
-                priceDiff !== null && priceDiff > 10 && "border-l-2 border-l-red-400",
-                priceDiff !== null && priceDiff < -10 && "border-l-2 border-l-blue-400",
-                priceDiff !== null && Math.abs(priceDiff) <= 10 && "border-l-2 border-l-emerald-400"
+                priceDiff !== null && priceDiff > 10 && "border-l-2 border-l-destructive",
+                priceDiff !== null && priceDiff < -10 && "border-l-2 border-l-primary",
+                priceDiff !== null && Math.abs(priceDiff) <= 10 && "border-l-2 border-l-emerald-500"
               )}
               onClick={() => onDayClick(day.date)}
             >
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-medium">{dateNum}</span>
+                <time dateTime={day.date} className="text-xs font-medium">
+                  {dateNum}
+                </time>
                 <div className="flex gap-0.5">
                   {day.hasEvent && (
-                    <div className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                    <span className="inline-flex h-1.5 w-1.5 rounded-full bg-amber-500">
+                      <span className="sr-only">Manual event</span>
+                    </span>
                   )}
                   {day.hasPromotion && (
-                    <div className="h-1.5 w-1.5 rounded-full bg-purple-500" />
+                    <span className="inline-flex h-1.5 w-1.5 rounded-full bg-purple-500">
+                      <span className="sr-only">Promotion</span>
+                    </span>
                   )}
                   {day.signalCount > 0 && (
-                    <div
+                    <span
                       className={cn(
-                        "h-1.5 w-1.5 rounded-full",
+                        "inline-flex h-1.5 w-1.5 rounded-full",
                         day.signalDirection === "NEGATIVE_DISRUPTION"
                           ? "bg-red-500"
                           : "bg-indigo-500"
                       )}
-                    />
+                    >
+                      <span className="sr-only">Imported signal</span>
+                    </span>
                   )}
                 </div>
               </div>

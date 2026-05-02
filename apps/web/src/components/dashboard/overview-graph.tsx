@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { chartColors } from "@/lib/chart-colors";
 import type { OverviewGraphData } from "@hotel-pricing/shared";
 
 interface OverviewGraphProps {
@@ -24,16 +25,6 @@ interface OverviewGraphProps {
   onDateClick?: (date: string) => void;
 }
 
-const COLORS = [
-  "#94a3b8",
-  "#a78bfa",
-  "#f97316",
-  "#14b8a6",
-  "#f43f5e",
-  "#8b5cf6",
-  "#06b6d4",
-];
-
 function formatShortDate(dateStr: string): string {
   const d = new Date(dateStr + "T12:00:00");
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -42,7 +33,7 @@ function formatShortDate(dateStr: string): string {
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border bg-white p-3 shadow-md text-xs min-w-[180px]">
+    <div className="rounded-lg border bg-popover p-3 shadow-md text-xs min-w-[180px] text-popover-foreground">
       <p className="font-semibold mb-2">{formatShortDate(label)}</p>
       {payload.map((entry: any, i: number) => (
         <div key={i} className="flex items-center justify-between gap-4 py-0.5">
@@ -75,6 +66,25 @@ export function OverviewGraph({
   onRangeChange,
   onDateClick,
 }: OverviewGraphProps) {
+  const chartData = useMemo(
+    () =>
+      graphData.dates.map((date, i) => {
+        const point: Record<string, any> = {
+          date,
+          dateLabel: formatShortDate(date),
+          "Your Hotel": graphData.yourHotel[i],
+          "Comp Avg": graphData.compAvg[i],
+          Recommended: graphData.recommended[i],
+          Occupancy: graphData.occupancy[i],
+        };
+        graphData.competitors.forEach((comp) => {
+          point[comp.name] = comp.data[i];
+        });
+        return point;
+      }),
+    [graphData]
+  );
+
   if (loading) {
     return (
       <div className="space-y-3">
@@ -97,21 +107,6 @@ export function OverviewGraph({
       </div>
     );
   }
-
-  const chartData = graphData.dates.map((date, i) => {
-    const point: Record<string, any> = {
-      date,
-      dateLabel: formatShortDate(date),
-      "Your Hotel": graphData.yourHotel[i],
-      "Comp Avg": graphData.compAvg[i],
-      Recommended: graphData.recommended[i],
-      Occupancy: graphData.occupancy[i],
-    };
-    graphData.competitors.forEach((comp) => {
-      point[comp.name] = comp.data[i];
-    });
-    return point;
-  });
 
   return (
     <div className="space-y-3">
@@ -144,15 +139,15 @@ export function OverviewGraph({
               if (data?.activeLabel) onDateClick?.(data.activeLabel);
             }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+            <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
             <XAxis
               dataKey="dateLabel"
-              tick={{ fontSize: 11 }}
+              tick={{ fontSize: 11, fill: chartColors.axis }}
               tickLine={false}
             />
             <YAxis
               yAxisId="price"
-              tick={{ fontSize: 11 }}
+              tick={{ fontSize: 11, fill: chartColors.axis }}
               tickLine={false}
               tickFormatter={(v) => `$${Math.round(v / 100)}`}
               width={50}
@@ -160,7 +155,7 @@ export function OverviewGraph({
             <YAxis
               yAxisId="occ"
               orientation="right"
-              tick={{ fontSize: 11 }}
+              tick={{ fontSize: 11, fill: chartColors.axis }}
               tickLine={false}
               tickFormatter={(v) => `${v}%`}
               width={40}
@@ -175,7 +170,7 @@ export function OverviewGraph({
             <Bar
               yAxisId="occ"
               dataKey="Occupancy"
-              fill="#e2e8f0"
+              fill={chartColors.occupancy}
               opacity={0.5}
               radius={[2, 2, 0, 0]}
               barSize={graphRange > 14 ? 8 : 16}
@@ -185,10 +180,10 @@ export function OverviewGraph({
               yAxisId="price"
               type="monotone"
               dataKey="Your Hotel"
-              stroke="#2563eb"
+              stroke={chartColors.primary}
               strokeWidth={2.5}
-              dot={{ r: 3, fill: "#2563eb" }}
-              activeDot={{ r: 5, stroke: "#fff", strokeWidth: 2 }}
+              dot={{ r: 3, fill: chartColors.primary }}
+              activeDot={{ r: 5, stroke: chartColors.surface, strokeWidth: 2 }}
               connectNulls
             />
 
@@ -196,7 +191,7 @@ export function OverviewGraph({
               yAxisId="price"
               type="monotone"
               dataKey="Comp Avg"
-              stroke="#64748b"
+              stroke={chartColors.comparison}
               strokeWidth={1.5}
               strokeDasharray="4 4"
               dot={false}
@@ -207,7 +202,7 @@ export function OverviewGraph({
               yAxisId="price"
               type="monotone"
               dataKey="Recommended"
-              stroke="#16a34a"
+              stroke={chartColors.recommended}
               strokeWidth={1.5}
               strokeDasharray="6 3"
               dot={false}
@@ -220,7 +215,7 @@ export function OverviewGraph({
                 yAxisId="price"
                 type="monotone"
                 dataKey={comp.name}
-                stroke={COLORS[i % COLORS.length]}
+                stroke={chartColors.series[i % chartColors.series.length]}
                 strokeWidth={1}
                 dot={false}
                 opacity={0.6}

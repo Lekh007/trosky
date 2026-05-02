@@ -74,7 +74,7 @@ export function CompetitorCards({
         <h3 className="text-sm font-semibold">Competitor Set</h3>
         <div className="flex gap-3 overflow-x-auto pb-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-44 w-52 shrink-0 rounded-lg" />
+            <Skeleton key={i} className="h-44 w-[72vw] max-w-52 shrink-0 rounded-lg sm:w-52" />
           ))}
         </div>
       </div>
@@ -120,7 +120,7 @@ export function CompetitorCards({
             <Card
               key={comp.id}
               className={cn(
-                "shrink-0 w-52 cursor-pointer transition-all hover:shadow-md",
+                "w-[72vw] max-w-52 shrink-0 cursor-pointer transition-all hover:shadow-md sm:w-52",
                 comp.dataPending && "opacity-70"
               )}
               onClick={() => onCompetitorClick?.(comp.id)}

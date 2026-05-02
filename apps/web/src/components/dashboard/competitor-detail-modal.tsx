@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +23,8 @@ import {
 import { Star, ExternalLink, Clock } from "lucide-react";
 import { updateHotelCompetitor, removeHotelCompetitor } from "@/actions/hotels";
 import { toast } from "@/hooks/use-toast";
-import { weightToLabel, labelToWeight } from "@hotel-pricing/shared";
+import { chartColors } from "@/lib/chart-colors";
+import { COMPETITOR_WEIGHT_OPTIONS, weightToLabel, labelToWeight } from "@hotel-pricing/shared";
 import type { CompetitorCard, OverviewGraphData, WeightLabel } from "@hotel-pricing/shared";
 
 interface CompetitorDetailModalProps {
@@ -60,21 +61,24 @@ export function CompetitorDetailModal({
     competitor ? weightToLabel(competitor.weight) : "Medium"
   );
 
-  if (!competitor) return null;
+  const sparkData = useMemo(() => {
+    const compSeries = graphData.competitors.find(
+      (c) => c.id === competitorId
+    );
 
-  const compSeries = graphData.competitors.find(
-    (c) => c.id === competitorId
-  );
-  const sparkData = compSeries
-    ? graphData.dates.slice(0, 14).map((date, i) => ({
-        date: new Date(date + "T12:00:00").toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        }),
-        rate: compSeries.data[i],
-        yourHotel: graphData.yourHotel[i],
-      }))
-    : [];
+    return compSeries
+      ? graphData.dates.slice(0, 14).map((date, i) => ({
+          date: new Date(date + "T12:00:00").toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          }),
+          rate: compSeries.data[i],
+          yourHotel: graphData.yourHotel[i],
+        }))
+      : [];
+  }, [competitorId, graphData]);
+
+  if (!competitor) return null;
 
   async function handleWeightChange(label: WeightLabel) {
     setWeight(label);
@@ -215,7 +219,7 @@ export function CompetitorDetailModal({
                     <Line
                       type="monotone"
                       dataKey="rate"
-                      stroke="#64748b"
+                      stroke={chartColors.comparison}
                       strokeWidth={2}
                       dot={false}
                       name={competitor.name}
@@ -224,7 +228,7 @@ export function CompetitorDetailModal({
                     <Line
                       type="monotone"
                       dataKey="yourHotel"
-                      stroke="#2563eb"
+                      stroke={chartColors.primary}
                       strokeWidth={1.5}
                       strokeDasharray="4 4"
                       dot={false}
@@ -257,12 +261,17 @@ export function CompetitorDetailModal({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Low">Low</SelectItem>
-                    <SelectItem value="Medium">Medium</SelectItem>
-                    <SelectItem value="High">High</SelectItem>
+                    {COMPETITOR_WEIGHT_OPTIONS.map((option) => (
+                      <SelectItem key={option.label} value={option.label}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
+              <p className="text-xs text-muted-foreground">
+                {COMPETITOR_WEIGHT_OPTIONS.find((option) => option.label === weight)?.description}
+              </p>
 
               <Button
                 variant="destructive"

@@ -32,7 +32,7 @@ export function SevenDayCards({
         </div>
         <div className="flex gap-3 overflow-x-auto pb-2">
           {Array.from({ length: 7 }).map((_, i) => (
-            <Skeleton key={i} className="h-28 w-36 shrink-0 rounded-lg" />
+            <Skeleton key={i} className="h-28 w-[calc(50vw-1.5rem)] min-w-32 max-w-36 shrink-0 rounded-lg sm:w-36" />
           ))}
         </div>
       </div>
@@ -74,10 +74,10 @@ export function SevenDayCards({
               key={rate.date}
               onClick={() => onDateClick?.(rate.date)}
               className={cn(
-                "flex flex-col items-center shrink-0 rounded-lg border p-3 w-[130px] transition-all hover:shadow-md cursor-pointer text-center",
+                "flex min-h-28 w-[calc(50vw-1.5rem)] min-w-32 max-w-36 shrink-0 flex-col items-center rounded-lg border p-3 text-center transition-all hover:shadow-md cursor-pointer sm:w-36",
                 rate.isToday
                   ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                  : "border-border bg-white hover:border-primary/30"
+                  : "border-border bg-card hover:border-primary/30"
               )}
             >
               <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">

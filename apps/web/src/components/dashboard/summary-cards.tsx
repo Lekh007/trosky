@@ -105,7 +105,7 @@ export function SummaryCards({ data, roomCount }: SummaryCardsProps) {
         </Card>
       ))}
       {(data.hasEvent || data.hasPromotion) && (
-        <Card className="border-amber-200 bg-amber-50/50">
+        <Card className="border-amber-500/30 bg-amber-500/10">
           <CardHeader className="flex flex-row items-center justify-between pb-1 pt-4 px-4">
             <CardTitle className="text-xs font-medium text-amber-700">Alerts</CardTitle>
             <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />

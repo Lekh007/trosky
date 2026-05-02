@@ -2,9 +2,10 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@hotel-pricing/db";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Building2, TrendingUp, Users, DollarSign } from "lucide-react";
+import { Building2, TrendingUp, Users, DollarSign, Plus } from "lucide-react";
 
 export default async function PortfolioPage() {
   const session = await getSession();
@@ -157,6 +158,21 @@ export default async function PortfolioPage() {
           );
         })}
       </div>
+      {hotels.length === 0 && (
+        <div className="rounded-lg border-2 border-dashed p-10 text-center">
+          <Building2 className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
+          <p className="text-sm font-medium">No active hotels yet</p>
+          <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+            Active pilot properties will appear here once they are added to the portfolio.
+          </p>
+          <Button asChild size="sm" className="mt-4 gap-1.5">
+            <Link href="/hotels/new">
+              <Plus className="h-4 w-4" />
+              Add Hotel
+            </Link>
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

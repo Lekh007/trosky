@@ -44,7 +44,7 @@ const features = [
 
 export function WhyDifferent() {
   return (
-    <SectionWrapper className="landing-bg border-t border-landing-border px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+    <SectionWrapper id="platform" className="landing-bg border-t border-landing-border px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
       <div className="mx-auto max-w-6xl">
         <h2 className="text-center text-2xl font-bold tracking-tight landing-text sm:text-3xl md:text-4xl">
           Why Trosky Analytics Is Different

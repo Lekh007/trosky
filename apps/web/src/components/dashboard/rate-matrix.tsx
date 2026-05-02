@@ -56,7 +56,7 @@ export function RateMatrix({ days, competitors, onCellClick }: RateMatrixProps) 
                     key={d.date}
                     className={cn(
                       "min-w-[90px] px-3 py-2 text-center font-medium cursor-pointer hover:bg-accent transition-colors",
-                      isWeekend && "bg-blue-50/50"
+                      isWeekend && "bg-primary/5"
                     )}
                     onClick={() => onCellClick(d.date)}
                   >
@@ -64,18 +64,22 @@ export function RateMatrix({ days, competitors, onCellClick }: RateMatrixProps) 
                     <div className="text-xs">{day}</div>
                     <div className="mt-1 flex items-center justify-center gap-1">
                       {d.hasEvent && (
-                        <div className="h-1.5 w-1.5 rounded-full bg-amber-500" title="Manual event" />
+                        <span className="inline-flex h-1.5 w-1.5 rounded-full bg-amber-500" title="Manual event">
+                          <span className="sr-only">Manual event</span>
+                        </span>
                       )}
                       {d.signalCount > 0 && (
-                        <div
+                        <span
                           className={cn(
-                            "h-1.5 w-1.5 rounded-full",
+                            "inline-flex h-1.5 w-1.5 rounded-full",
                             d.signalDirection === "NEGATIVE_DISRUPTION"
                               ? "bg-red-500"
                               : "bg-indigo-500"
                           )}
                           title="Imported signal"
-                        />
+                        >
+                          <span className="sr-only">Imported signal</span>
+                        </span>
                       )}
                     </div>
                   </th>
@@ -86,12 +90,12 @@ export function RateMatrix({ days, competitors, onCellClick }: RateMatrixProps) 
           <tbody>
             {/* Our Hotel Row - pinned */}
             <tr className="border-b bg-primary/5 font-medium">
-              <td className="sticky left-0 z-10 bg-primary/5 px-4 py-3">
+              <th scope="row" className="sticky left-0 z-10 bg-primary/5 px-4 py-3 text-left">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-primary" />
                   <span className="font-semibold text-primary">Our Hotel</span>
                 </div>
-              </td>
+              </th>
               {days.map((d) => (
                 <td
                   key={d.date}
@@ -114,13 +118,13 @@ export function RateMatrix({ days, competitors, onCellClick }: RateMatrixProps) 
             </tr>
 
             {/* Recommended Row */}
-            <tr className="border-b bg-emerald-50/30">
-              <td className="sticky left-0 z-10 bg-emerald-50/30 px-4 py-2">
+            <tr className="border-b bg-emerald-500/10">
+              <th scope="row" className="sticky left-0 z-10 bg-emerald-500/10 px-4 py-2 text-left">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-emerald-500" />
                   <span className="text-emerald-700 text-xs font-medium">AI Recommended</span>
                 </div>
-              </td>
+              </th>
               {days.map((d) => (
                 <td key={d.date} className="px-3 py-2 text-center text-xs">
                   <span className="text-emerald-700 font-medium">
@@ -136,15 +140,15 @@ export function RateMatrix({ days, competitors, onCellClick }: RateMatrixProps) 
             </tr>
 
             {/* Comp Average Row */}
-            <tr className="border-b bg-slate-50/50">
-              <td className="sticky left-0 z-10 bg-slate-50/50 px-4 py-2">
+            <tr className="border-b bg-muted/40">
+              <th scope="row" className="sticky left-0 z-10 bg-muted/40 px-4 py-2 text-left">
                 <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-slate-400" />
-                  <span className="text-xs font-medium text-slate-600">Comp Average</span>
+                  <div className="h-2 w-2 rounded-full bg-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground">Comp Average</span>
                 </div>
-              </td>
+              </th>
               {days.map((d) => (
-                <td key={d.date} className="px-3 py-2 text-center text-xs text-slate-600">
+                <td key={d.date} className="px-3 py-2 text-center text-xs text-muted-foreground">
                   {fmt(d.compAvgRate)}
                 </td>
               ))}
@@ -153,7 +157,7 @@ export function RateMatrix({ days, competitors, onCellClick }: RateMatrixProps) 
             {/* Individual Competitor Rows */}
             {sortedCompetitors.map((comp) => (
               <tr key={comp.id} className="border-b hover:bg-muted/30 transition-colors">
-                <td className="sticky left-0 z-10 bg-white px-4 py-2">
+                <th scope="row" className="sticky left-0 z-10 bg-background px-4 py-2 text-left">
                   <div className="flex items-center gap-2">
                     <Badge
                       variant={
@@ -169,7 +173,7 @@ export function RateMatrix({ days, competitors, onCellClick }: RateMatrixProps) 
                     </Badge>
                     <span className="text-xs truncate max-w-[140px]">{comp.name}</span>
                   </div>
-                </td>
+                </th>
                 {days.map((d) => {
                   const compData = d.competitors.find((c) => c.id === comp.id);
                   const diff =

@@ -39,7 +39,7 @@ const rows = [
 
 export function ComparisonTable() {
   return (
-    <SectionWrapper className="bg-white/60 px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+    <SectionWrapper id="comparison" className="landing-bg px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
       <div className="mx-auto max-w-4xl">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -58,23 +58,33 @@ export function ComparisonTable() {
             intelligence.
           </p>
         </motion.div>
+        {/* Table cells must stay `display: table-cell`; flex on <td> breaks column layout in browsers. */}
         <div className="mt-14 hidden overflow-hidden rounded-2xl border border-border bg-card shadow-lg md:block">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[320px] table-fixed border-collapse">
+            <table className="w-full min-w-[640px] border-collapse">
               <colgroup>
-                <col className="w-[45%]" />
-                <col className="w-[27.5%]" />
-                <col className="w-[27.5%]" />
+                <col className="min-w-[200px] md:w-[38%]" />
+                <col className="md:w-[31%]" />
+                <col className="md:w-[31%]" />
               </colgroup>
               <thead>
                 <tr className="border-b border-border bg-muted/50">
-                  <th className="px-6 py-5 text-left text-sm font-semibold text-foreground">
+                  <th
+                    scope="col"
+                    className="px-5 py-4 text-left text-sm font-semibold text-foreground sm:px-6 sm:py-5"
+                  >
                     Feature
                   </th>
-                  <th className="px-6 py-5 text-left text-sm font-semibold text-muted-foreground">
+                  <th
+                    scope="col"
+                    className="px-5 py-4 text-left text-sm font-semibold text-muted-foreground sm:px-6 sm:py-5"
+                  >
                     Traditional
                   </th>
-                  <th className="px-6 py-5 text-left text-sm font-semibold text-primary">
+                  <th
+                    scope="col"
+                    className="px-5 py-4 text-left text-sm font-semibold text-primary sm:px-6 sm:py-5"
+                  >
                     Trosky
                   </th>
                 </tr>
@@ -96,25 +106,42 @@ export function ComparisonTable() {
                       }}
                       className={
                         i < rows.length - 1
-                          ? "border-b border-border"
-                          : ""
+                          ? "border-b border-border transition-colors hover:bg-muted/20"
+                          : "transition-colors hover:bg-muted/20"
                       }
                     >
-                      <td className="px-6 py-4">
+                      <th
+                        scope="row"
+                        className="px-5 py-4 text-left align-middle font-normal sm:px-6 sm:py-5"
+                      >
                         <span className="flex items-center gap-3 text-sm font-medium text-foreground">
-                          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                             <Icon className="h-4 w-4" />
                           </span>
                           {row.feature}
                         </span>
+                      </th>
+                      <td className="px-5 py-4 align-middle text-sm text-muted-foreground sm:px-6 sm:py-5">
+                        <div className="flex items-center gap-2.5">
+                          <span
+                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-destructive/15 text-destructive"
+                            aria-hidden
+                          >
+                            <X className="h-3.5 w-3.5" strokeWidth={2.5} />
+                          </span>
+                          <span>{row.traditional}</span>
+                        </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-muted-foreground flex items-center gap-2">
-                        <X className="h-4 w-4 shrink-0 text-destructive/80" />
-                        {row.traditional}
-                      </td>
-                      <td className="px-6 py-4 text-sm font-medium text-primary flex items-center gap-2">
-                        <Check className="h-4 w-4 shrink-0" />
-                        {row.trosky}
+                      <td className="px-5 py-4 align-middle text-sm font-medium text-primary sm:px-6 sm:py-5">
+                        <div className="flex items-center gap-2.5">
+                          <span
+                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary"
+                            aria-hidden
+                          >
+                            <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+                          </span>
+                          <span>{row.trosky}</span>
+                        </div>
                       </td>
                     </motion.tr>
                   );

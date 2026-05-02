@@ -11,10 +11,48 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2, Plus, ArrowLeft } from "lucide-react";
 import { updateHotel, addCompetitorToHotel, updateHotelCompetitor, removeHotelCompetitor } from "@/actions/hotels";
-import { createRatePlan, updateRatePlan } from "@/actions/rate-plans";
+import { createRatePlan } from "@/actions/rate-plans";
 import { toast } from "@/hooks/use-toast";
-import { weightToLabel } from "@hotel-pricing/shared";
+import { COMPETITOR_WEIGHT_OPTIONS } from "@hotel-pricing/shared";
 import Link from "next/link";
+
+type GeneralForm = {
+  name: string;
+  pmsName: string;
+  phone: string;
+  email: string;
+  address: string;
+  timezone: string;
+  roomCount: number;
+  minRate: number | string;
+  maxRate: number | string;
+  occTarget: number;
+};
+
+function validateGeneralHotel(general: GeneralForm) {
+  const errors: string[] = [];
+  const minRate = general.minRate === "" ? null : Number(general.minRate);
+  const maxRate = general.maxRate === "" ? null : Number(general.maxRate);
+
+  if (!general.name.trim()) errors.push("Hotel name is required.");
+  if (!Number.isInteger(general.roomCount) || general.roomCount <= 0) {
+    errors.push("Room count must be a whole number greater than 0.");
+  }
+  if (general.occTarget < 0 || general.occTarget > 100) {
+    errors.push("Occupancy target must be between 0 and 100.");
+  }
+  if (minRate !== null && (!Number.isFinite(minRate) || minRate <= 0)) {
+    errors.push("Minimum rate must be greater than 0.");
+  }
+  if (maxRate !== null && (!Number.isFinite(maxRate) || maxRate <= 0)) {
+    errors.push("Maximum rate must be greater than 0.");
+  }
+  if (minRate !== null && maxRate !== null && minRate > maxRate) {
+    errors.push("Maximum rate must be higher than the minimum rate.");
+  }
+
+  return errors;
+}
 
 interface HotelSettingsProps {
   hotel: {
@@ -57,7 +95,7 @@ export function HotelSettings({ hotel }: HotelSettingsProps) {
   const [saving, setSaving] = useState(false);
 
   // General form
-  const [general, setGeneral] = useState({
+  const [general, setGeneral] = useState<GeneralForm>({
     name: hotel.name,
     pmsName: hotel.pmsName || "",
     phone: hotel.phone || "",
@@ -75,8 +113,18 @@ export function HotelSettings({ hotel }: HotelSettingsProps) {
 
   // Rate plan form
   const [newPlan, setNewPlan] = useState({ code: "", name: "", discountPercent: "0" });
+  const generalErrors = validateGeneralHotel(general);
 
   async function handleSaveGeneral() {
+    if (generalErrors.length > 0) {
+      toast({
+        title: "Check hotel details",
+        description: "Fix the highlighted values before saving.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSaving(true);
     try {
       await updateHotel({
@@ -209,22 +257,60 @@ export function HotelSettings({ hotel }: HotelSettingsProps) {
               <div className="grid gap-4 md:grid-cols-4">
                 <div className="space-y-2">
                   <Label>Room Count</Label>
-                  <Input type="number" value={general.roomCount} onChange={(e) => setGeneral({ ...general, roomCount: parseInt(e.target.value) || 0 })} />
+                  <Input
+                    type="number"
+                    value={general.roomCount}
+                    min={1}
+                    step={1}
+                    aria-invalid={!Number.isInteger(general.roomCount) || general.roomCount <= 0}
+                    onChange={(e) => setGeneral({ ...general, roomCount: parseInt(e.target.value) || 0 })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Min Rate ($)</Label>
-                  <Input type="number" value={general.minRate} onChange={(e) => setGeneral({ ...general, minRate: e.target.value as any })} />
+                  <Input
+                    type="number"
+                    value={general.minRate}
+                    min={1}
+                    aria-invalid={general.minRate !== "" && Number(general.minRate) <= 0}
+                    onChange={(e) => setGeneral({ ...general, minRate: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Max Rate ($)</Label>
-                  <Input type="number" value={general.maxRate} onChange={(e) => setGeneral({ ...general, maxRate: e.target.value as any })} />
+                  <Input
+                    type="number"
+                    value={general.maxRate}
+                    min={1}
+                    aria-invalid={
+                      general.maxRate !== "" &&
+                      (Number(general.maxRate) <= 0 ||
+                        (general.minRate !== "" &&
+                          Number(general.minRate) > Number(general.maxRate)))
+                    }
+                    onChange={(e) => setGeneral({ ...general, maxRate: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Occ Target %</Label>
-                  <Input type="number" value={general.occTarget} onChange={(e) => setGeneral({ ...general, occTarget: parseFloat(e.target.value) || 75 })} />
+                  <Input
+                    type="number"
+                    value={general.occTarget}
+                    min={0}
+                    max={100}
+                    aria-invalid={general.occTarget < 0 || general.occTarget > 100}
+                    onChange={(e) => setGeneral({ ...general, occTarget: parseFloat(e.target.value) || 75 })}
+                  />
                 </div>
               </div>
-              <Button onClick={handleSaveGeneral} disabled={saving}>
+              {generalErrors.length > 0 && (
+                <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
+                  {generalErrors.map((error) => (
+                    <p key={error}>{error}</p>
+                  ))}
+                </div>
+              )}
+              <Button onClick={handleSaveGeneral} disabled={saving || generalErrors.length > 0}>
                 {saving ? "Saving..." : "Save Changes"}
               </Button>
             </CardContent>
@@ -235,6 +321,10 @@ export function HotelSettings({ hotel }: HotelSettingsProps) {
           <Card>
             <CardHeader><CardTitle>Competitor Set</CardTitle></CardHeader>
             <CardContent className="space-y-4">
+              <p className="text-xs text-muted-foreground">
+                Weight controls how strongly each competitor influences recommendations:{" "}
+                {COMPETITOR_WEIGHT_OPTIONS.map((option) => `${option.label} means ${option.description.toLowerCase()}`).join("; ")}.
+              </p>
               <div className="border rounded-md overflow-hidden">
                 <table className="w-full text-sm">
                   <thead>
@@ -255,9 +345,11 @@ export function HotelSettings({ hotel }: HotelSettingsProps) {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="0.25">Low (0.25)</SelectItem>
-                              <SelectItem value="0.5">Medium (0.5)</SelectItem>
-                              <SelectItem value="0.85">High (0.85)</SelectItem>
+                              {COMPETITOR_WEIGHT_OPTIONS.map((option) => (
+                                <SelectItem key={option.label} value={String(option.value)}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </td>
@@ -283,9 +375,11 @@ export function HotelSettings({ hotel }: HotelSettingsProps) {
                   <Select value={newComp.weight} onValueChange={(v) => setNewComp({ ...newComp, weight: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="0.25">Low</SelectItem>
-                      <SelectItem value="0.5">Medium</SelectItem>
-                      <SelectItem value="0.85">High</SelectItem>
+                      {COMPETITOR_WEIGHT_OPTIONS.map((option) => (
+                        <SelectItem key={option.label} value={String(option.value)}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <Button onClick={handleAddCompetitor} disabled={saving}>

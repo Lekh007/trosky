@@ -6,6 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ThemeToggle } from "@/components/theme-toggle";
+
+const demoAccounts = [
+  { label: "Analyst demo", email: "analyst@example.com", password: "Password123!" },
+  { label: "Client demo", email: "client@example.com", password: "Password123!" },
+];
 
 export default function LoginPage() {
   const router = useRouter();
@@ -42,8 +48,17 @@ export default function LoginPage() {
     }
   }
 
+  function fillDemoCredentials(account: (typeof demoAccounts)[number]) {
+    setEmail(account.email);
+    setPassword(account.password);
+    setError("");
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 p-4 dark:from-background dark:to-secondary">
+      <div className="absolute right-4 top-4">
+        <ThemeToggle />
+      </div>
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="mx-auto mb-4 h-12 w-12 rounded-lg bg-primary flex items-center justify-center">
@@ -86,13 +101,27 @@ export default function LoginPage() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Signing in..." : "Sign In"}
             </Button>
-            {process.env.NEXT_PUBLIC_SHOW_DEMO_CREDENTIALS === "true" && (
-              <div className="text-xs text-muted-foreground text-center space-y-1">
-                <p>Demo accounts (development only)</p>
-                <p>analyst@example.com / Password123!</p>
-                <p>client@example.com / Password123!</p>
+            <div className="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground">
+              <p className="mb-2 text-center font-medium text-foreground">
+                Pilot demo accounts
+              </p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {demoAccounts.map((account) => (
+                  <button
+                    key={account.email}
+                    type="button"
+                    className="rounded-md border bg-background px-3 py-2 text-left transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onClick={() => fillDemoCredentials(account)}
+                  >
+                    <span className="block font-medium text-foreground">
+                      {account.label}
+                    </span>
+                    <span className="block truncate">{account.email}</span>
+                    <span className="block truncate">{account.password}</span>
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
           </form>
         </CardContent>
       </Card>

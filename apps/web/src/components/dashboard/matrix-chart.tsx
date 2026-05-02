@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   ComposedChart,
   Line,
@@ -12,6 +13,7 @@ import {
   ResponsiveContainer,
   ReferenceDot,
 } from "recharts";
+import { chartColors } from "@/lib/chart-colors";
 import type { DashboardDay } from "@hotel-pricing/shared";
 
 interface MatrixChartProps {
@@ -28,41 +30,45 @@ function formatDate(dateStr: string): string {
 }
 
 export function MatrixChart({ days }: MatrixChartProps) {
-  const chartData = days.map((d) => ({
-    date: formatDate(d.date),
-    fullDate: d.date,
-    ourRate: d.ourRate ? d.ourRate / 100 : null,
-    compAvg: d.compAvgRate ? d.compAvgRate / 100 : null,
-    recommended: d.recommendedRate ? d.recommendedRate / 100 : null,
-    occupancy: d.occPercent,
-    hasEvent: d.hasEvent,
-  }));
+  const chartData = useMemo(
+    () =>
+      days.map((d) => ({
+        date: formatDate(d.date),
+        fullDate: d.date,
+        ourRate: d.ourRate ? d.ourRate / 100 : null,
+        compAvg: d.compAvgRate ? d.compAvgRate / 100 : null,
+        recommended: d.recommendedRate ? d.recommendedRate / 100 : null,
+        occupancy: d.occPercent,
+        hasEvent: d.hasEvent,
+      })),
+    [days]
+  );
 
   const eventDots = chartData
     .filter((d) => d.hasEvent && d.ourRate)
     .map((d) => ({ x: d.date, y: d.ourRate! }));
 
   return (
-    <div className="border rounded-lg p-4 bg-white">
+    <div className="border rounded-lg p-4 bg-card">
       <h3 className="text-sm font-medium mb-4">Rate Comparison & Occupancy</h3>
       <ResponsiveContainer width="100%" height={300}>
         <ComposedChart data={chartData} margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
           <XAxis
             dataKey="date"
-            tick={{ fontSize: 11 }}
+            tick={{ fontSize: 11, fill: chartColors.axis }}
             tickLine={false}
           />
           <YAxis
             yAxisId="left"
-            tick={{ fontSize: 11 }}
+            tick={{ fontSize: 11, fill: chartColors.axis }}
             tickFormatter={(v) => `$${v}`}
             domain={["auto", "auto"]}
           />
           <YAxis
             yAxisId="right"
             orientation="right"
-            tick={{ fontSize: 11 }}
+            tick={{ fontSize: 11, fill: chartColors.axis }}
             tickFormatter={(v) => `${v}%`}
             domain={[0, 100]}
           />
@@ -71,7 +77,7 @@ export function MatrixChart({ days }: MatrixChartProps) {
               if (!active || !payload?.length) return null;
               const data = payload[0]?.payload;
               return (
-                <div className="bg-white border rounded-lg shadow-lg p-3 text-xs space-y-1">
+                <div className="bg-popover text-popover-foreground border rounded-lg shadow-lg p-3 text-xs space-y-1">
                   <p className="font-semibold">{label}</p>
                   {data?.ourRate && (
                     <p className="text-blue-600">
@@ -79,7 +85,7 @@ export function MatrixChart({ days }: MatrixChartProps) {
                     </p>
                   )}
                   {data?.compAvg && (
-                    <p className="text-slate-500">
+                    <p className="text-muted-foreground">
                       Comp Avg: <span className="font-medium">${Math.round(data.compAvg)}</span>
                     </p>
                   )}
@@ -107,7 +113,7 @@ export function MatrixChart({ days }: MatrixChartProps) {
             yAxisId="left"
             type="monotone"
             dataKey="ourRate"
-            stroke="#2563eb"
+            stroke={chartColors.primary}
             strokeWidth={2}
             name="Our Rate"
             dot={{ r: 3 }}
@@ -117,7 +123,7 @@ export function MatrixChart({ days }: MatrixChartProps) {
             yAxisId="left"
             type="monotone"
             dataKey="compAvg"
-            stroke="#94a3b8"
+            stroke={chartColors.comparison}
             strokeWidth={2}
             name="Comp Avg"
             dot={{ r: 2 }}
@@ -127,7 +133,7 @@ export function MatrixChart({ days }: MatrixChartProps) {
             yAxisId="left"
             type="monotone"
             dataKey="recommended"
-            stroke="#10b981"
+            stroke={chartColors.recommended}
             strokeWidth={2}
             strokeDasharray="5 5"
             name="Recommended"
@@ -137,7 +143,7 @@ export function MatrixChart({ days }: MatrixChartProps) {
           <Bar
             yAxisId="right"
             dataKey="occupancy"
-            fill="#a78bfa"
+            fill={chartColors.occupancy}
             opacity={0.3}
             name="Occupancy %"
             barSize={20}
@@ -149,8 +155,8 @@ export function MatrixChart({ days }: MatrixChartProps) {
               x={dot.x}
               y={dot.y}
               r={6}
-              fill="#f59e0b"
-              stroke="#fff"
+              fill={chartColors.warning}
+              stroke={chartColors.surface}
               strokeWidth={2}
             />
           ))}

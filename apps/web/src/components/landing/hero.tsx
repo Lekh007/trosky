@@ -45,7 +45,7 @@ export function Hero() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className="mb-4 inline-flex items-center gap-2 rounded-full border border-landing-border bg-white/80 px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground shadow-sm"
+              className="mb-4 inline-flex items-center gap-2 rounded-full border border-landing-border bg-card/80 px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground shadow-sm"
             >
               <TrendingUp className="h-3.5 w-3.5 text-primary" />
               <span>{EYEBROW.split(" · ")[0]}</span>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -81,6 +81,54 @@ export function DayDetailModal({
   >([]);
   const [discountWarning, setDiscountWarning] = useState<{ warning: boolean; reasons: string[] }>({ warning: false, reasons: [] });
 
+  const operationsSnapshot = useMemo(
+    () =>
+      JSON.stringify({
+        occEdit,
+        otbEdit,
+        availableRoomsEdit,
+        forecastRoomsEdit,
+        arrivalsEdit,
+        departuresEdit,
+        overbookingEdit,
+      }),
+    [
+      occEdit,
+      otbEdit,
+      availableRoomsEdit,
+      forecastRoomsEdit,
+      arrivalsEdit,
+      departuresEdit,
+      overbookingEdit,
+    ]
+  );
+  const initialOperationsSnapshot = useMemo(
+    () =>
+      JSON.stringify({
+        occEdit: data?.occPercent?.toString() || "",
+        otbEdit: data?.otbRooms?.toString() || "",
+        availableRoomsEdit: data?.availableRooms?.toString() || "",
+        forecastRoomsEdit: data?.forecastRooms?.toString() || "",
+        arrivalsEdit: data?.arrivals?.toString() || "",
+        departuresEdit: data?.departures?.toString() || "",
+        overbookingEdit: data?.overbookingLimit?.toString() || "",
+      }),
+    [
+      data?.arrivals,
+      data?.availableRooms,
+      data?.departures,
+      data?.forecastRooms,
+      data?.occPercent,
+      data?.otbRooms,
+      data?.overbookingLimit,
+    ]
+  );
+  const [savedOperationsSnapshot, setSavedOperationsSnapshot] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSavedOperationsSnapshot(null);
+  }, [date, initialOperationsSnapshot]);
+
   useEffect(() => {
     getEventsForDate(hotelId, date).then(setEvents).catch(() => {});
     getPromotionsForDate(hotelId, date).then(setPromos).catch(() => {});
@@ -112,8 +160,78 @@ export function DayDetailModal({
     }).catch(() => {});
   }, [hotelId, date, data?.ourRate]);
 
+  const occupancyErrors = useMemo(() => {
+    const errors: string[] = [];
+    const percentFields = [
+      { label: "Occupancy", value: occEdit },
+    ];
+    const roomFields = [
+      { label: "OTB rooms", value: otbEdit },
+      { label: "Available rooms", value: availableRoomsEdit },
+      { label: "Forecast rooms", value: forecastRoomsEdit },
+      { label: "Arrivals", value: arrivalsEdit },
+      { label: "Departures", value: departuresEdit },
+      { label: "Overbooking limit", value: overbookingEdit },
+    ];
+
+    percentFields.forEach(({ label, value }) => {
+      if (value === "") return;
+      const num = Number(value);
+      if (!Number.isFinite(num) || num < 0 || num > 100) {
+        errors.push(`${label} must be between 0 and 100.`);
+      }
+    });
+
+    roomFields.forEach(({ label, value }) => {
+      if (value === "") return;
+      const num = Number(value);
+      if (!Number.isInteger(num) || num < 0) {
+        errors.push(`${label} must be a whole number of 0 or more.`);
+      }
+    });
+
+    return errors;
+  }, [
+    arrivalsEdit,
+    availableRoomsEdit,
+    departuresEdit,
+    forecastRoomsEdit,
+    occEdit,
+    otbEdit,
+    overbookingEdit,
+  ]);
+
+  const priceOverrideError = useMemo(() => {
+    if (!overridePrice) return null;
+    const price = Number(overridePrice);
+    if (!Number.isFinite(price) || price <= 0) {
+      return "Override price must be greater than 0.";
+    }
+    if (hotel.minRate && price * 100 < hotel.minRate) {
+      return `Override is below the hotel minimum of ${fmt(hotel.minRate)}.`;
+    }
+    if (hotel.maxRate && price * 100 > hotel.maxRate) {
+      return `Override is above the hotel maximum of ${fmt(hotel.maxRate)}.`;
+    }
+    return null;
+  }, [hotel.maxRate, hotel.minRate, overridePrice]);
+
+  const hasUnsavedChanges =
+    Boolean(overridePrice || overrideReason || eventTitle || eventNotes || showAddEvent) ||
+    operationsSnapshot !== (savedOperationsSnapshot || initialOperationsSnapshot);
+
+  function requestClose() {
+    if (
+      hasUnsavedChanges &&
+      !window.confirm("Close without saving your changes for this date?")
+    ) {
+      return;
+    }
+    onClose();
+  }
+
   async function handleSaveOverride() {
-    if (!overridePrice) return;
+    if (!overridePrice || priceOverrideError || saving) return;
     setSaving(true);
     try {
       await setPriceOverride({
@@ -123,6 +241,8 @@ export function DayDetailModal({
         reason: overrideReason || undefined,
       });
       toast({ title: "Price override saved" });
+      setOverridePrice("");
+      setOverrideReason("");
       onRefresh();
     } catch (e: any) {
       toast({ title: "Error", description: e.message, variant: "destructive" });
@@ -132,7 +252,7 @@ export function DayDetailModal({
   }
 
   async function handleSaveEvent() {
-    if (!eventTitle) return;
+    if (!eventTitle.trim() || saving) return;
     setSaving(true);
     try {
       await createEvent({ hotelId, date, title: eventTitle, notes: eventNotes || undefined });
@@ -150,6 +270,7 @@ export function DayDetailModal({
   }
 
   async function handleSaveOccupancy() {
+    if (saving || occupancyErrors.length > 0) return;
     setSaving(true);
     try {
       await upsertOccupancy({
@@ -164,6 +285,7 @@ export function DayDetailModal({
         overbookingLimit: overbookingEdit ? parseInt(overbookingEdit) : null,
       });
       toast({ title: "Occupancy updated" });
+      setSavedOperationsSnapshot(operationsSnapshot);
       onRefresh();
     } catch (e: any) {
       toast({ title: "Error", description: e.message, variant: "destructive" });
@@ -173,6 +295,7 @@ export function DayDetailModal({
   }
 
   async function handleSuppressSignal(externalSignalId: string) {
+    if (saving) return;
     setSaving(true);
     try {
       await suppressSignalImpact({
@@ -207,8 +330,8 @@ export function DayDetailModal({
     : null;
 
   return (
-    <Dialog open onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-4xl">
+    <Dialog open onOpenChange={(open) => { if (!open) requestClose(); }}>
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-4xl">
         <DialogHeader>
           <DialogTitle>{formatDateFull(date)}</DialogTitle>
           <DialogDescription>
@@ -217,7 +340,7 @@ export function DayDetailModal({
         </DialogHeader>
 
         {discountWarning.warning && (
-          <div className="flex items-center gap-2 rounded-md bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+          <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-300">
             <AlertTriangle className="h-4 w-4 shrink-0" />
             <div>
               <p className="font-medium">Discount Warning</p>
@@ -275,6 +398,9 @@ export function DayDetailModal({
                     Set
                   </Button>
                 </div>
+                {priceOverrideError && (
+                  <p className="text-xs text-destructive">{priceOverrideError}</p>
+                )}
               </div>
             )}
 
@@ -401,6 +527,8 @@ export function DayDetailModal({
                         value={occEdit}
                         onChange={(e) => setOccEdit(e.target.value)}
                         className="h-8 text-xs"
+                        min={0}
+                        max={100}
                       />
                     </div>
                     <div className="space-y-1">
@@ -410,6 +538,8 @@ export function DayDetailModal({
                         value={otbEdit}
                         onChange={(e) => setOtbEdit(e.target.value)}
                         className="h-8 text-xs"
+                        min={0}
+                        step={1}
                       />
                     </div>
                     <div className="space-y-1">
@@ -419,6 +549,8 @@ export function DayDetailModal({
                         value={availableRoomsEdit}
                         onChange={(e) => setAvailableRoomsEdit(e.target.value)}
                         className="h-8 text-xs"
+                        min={0}
+                        step={1}
                       />
                     </div>
                     <div className="space-y-1">
@@ -428,6 +560,8 @@ export function DayDetailModal({
                         value={forecastRoomsEdit}
                         onChange={(e) => setForecastRoomsEdit(e.target.value)}
                         className="h-8 text-xs"
+                        min={0}
+                        step={1}
                       />
                     </div>
                   </div>
@@ -439,6 +573,8 @@ export function DayDetailModal({
                         value={arrivalsEdit}
                         onChange={(e) => setArrivalsEdit(e.target.value)}
                         className="h-8 text-xs"
+                        min={0}
+                        step={1}
                       />
                     </div>
                     <div className="space-y-1">
@@ -448,6 +584,8 @@ export function DayDetailModal({
                         value={departuresEdit}
                         onChange={(e) => setDeparturesEdit(e.target.value)}
                         className="h-8 text-xs"
+                        min={0}
+                        step={1}
                       />
                     </div>
                     <div className="space-y-1">
@@ -457,14 +595,23 @@ export function DayDetailModal({
                         value={overbookingEdit}
                         onChange={(e) => setOverbookingEdit(e.target.value)}
                         className="h-8 text-xs"
+                        min={0}
+                        step={1}
                       />
                     </div>
                     <div className="flex items-end">
-                      <Button size="sm" className="h-8 w-full" onClick={handleSaveOccupancy} disabled={saving}>
+                      <Button size="sm" className="h-8 w-full" onClick={handleSaveOccupancy} disabled={saving || occupancyErrors.length > 0}>
                         Save
                       </Button>
                     </div>
                   </div>
+                  {occupancyErrors.length > 0 && (
+                    <div className="space-y-1 text-xs text-destructive">
+                      {occupancyErrors.map((error) => (
+                        <p key={error}>{error}</p>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -584,7 +731,7 @@ export function DayDetailModal({
                         className="h-8 text-xs"
                       />
                       <div className="flex gap-2">
-                        <Button size="sm" className="h-7 text-xs" onClick={handleSaveEvent} disabled={saving}>
+                        <Button size="sm" className="h-7 text-xs" onClick={handleSaveEvent} disabled={saving || !eventTitle.trim()}>
                           Save Event
                         </Button>
                         <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setShowAddEvent(false)}>

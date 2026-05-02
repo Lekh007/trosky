@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,7 @@ interface ScrapeAdminProps {
 }
 
 export function ScrapeAdmin({ runs }: ScrapeAdminProps) {
+  const router = useRouter();
   const [triggering, setTriggering] = useState(false);
 
   async function handleRunNow() {
@@ -53,7 +55,7 @@ export function ScrapeAdmin({ runs }: ScrapeAdminProps) {
             <Play className="mr-2 h-4 w-4" />
             {triggering ? "Queuing..." : "Run Scrape Now"}
           </Button>
-          <Button variant="outline" onClick={() => window.location.reload()}>
+          <Button variant="outline" onClick={() => router.refresh()}>
             <RefreshCw className="mr-2 h-4 w-4" />
             Refresh
           </Button>

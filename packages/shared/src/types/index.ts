@@ -1,5 +1,27 @@
 export type WeightLabel = "Low" | "Medium" | "High";
 
+export const COMPETITOR_WEIGHT_OPTIONS: {
+  label: WeightLabel;
+  value: number;
+  description: string;
+}[] = [
+  {
+    label: "Low",
+    value: 0.25,
+    description: "Light influence in rate recommendations",
+  },
+  {
+    label: "Medium",
+    value: 0.5,
+    description: "Standard influence in rate recommendations",
+  },
+  {
+    label: "High",
+    value: 0.85,
+    description: "Strong influence in rate recommendations",
+  },
+];
+
 export function weightToLabel(w: number): WeightLabel {
   if (w <= 0.33) return "Low";
   if (w <= 0.66) return "Medium";
@@ -7,14 +29,7 @@ export function weightToLabel(w: number): WeightLabel {
 }
 
 export function labelToWeight(label: WeightLabel): number {
-  switch (label) {
-    case "Low":
-      return 0.25;
-    case "Medium":
-      return 0.5;
-    case "High":
-      return 0.85;
-  }
+  return COMPETITOR_WEIGHT_OPTIONS.find((option) => option.label === label)?.value ?? 0.5;
 }
 
 export interface DashboardDay {

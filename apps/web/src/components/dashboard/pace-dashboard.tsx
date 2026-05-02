@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { chartColors } from "@/lib/chart-colors";
+import { Building2 } from "lucide-react";
 
 interface PaceData {
   date: string;
@@ -25,18 +27,22 @@ interface PaceDashboardProps {
 export function PaceDashboard({ hotels, initialHotelId, occupancy, ourRate, compAvgRate }: PaceDashboardProps) {
   const [hotelId, setHotelId] = useState(initialHotelId || "");
 
-  const chartData = occupancy.map((o) => {
-    const pace = o.otbRooms !== null && o.otbLyRooms !== null
-      ? ((o.otbRooms - o.otbLyRooms) / Math.max(o.otbLyRooms, 1)) * 100
-      : null;
-    const d = new Date(o.date + "T12:00:00Z");
-    return {
-      date: d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }),
-      otbRooms: o.otbRooms,
-      otbLyRooms: o.otbLyRooms,
-      pace: pace ? Math.round(pace * 10) / 10 : null,
-    };
-  });
+  const chartData = useMemo(
+    () =>
+      occupancy.map((o) => {
+        const pace = o.otbRooms !== null && o.otbLyRooms !== null
+          ? ((o.otbRooms - o.otbLyRooms) / Math.max(o.otbLyRooms, 1)) * 100
+          : null;
+        const d = new Date(o.date + "T12:00:00Z");
+        return {
+          date: d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }),
+          otbRooms: o.otbRooms,
+          otbLyRooms: o.otbLyRooms,
+          pace: pace ? Math.round(pace * 10) / 10 : null,
+        };
+      }),
+    [occupancy]
+  );
 
   const ourADR = ourRate ? ourRate / 100 : null;
   const compADR = compAvgRate ? compAvgRate / 100 : null;
@@ -44,13 +50,13 @@ export function PaceDashboard({ hotels, initialHotelId, occupancy, ourRate, comp
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Pace / OTB Dashboard</h1>
           <p className="text-muted-foreground">Track booking pace against last year</p>
         </div>
         <Select value={hotelId} onValueChange={setHotelId}>
-          <SelectTrigger className="w-[300px]">
+          <SelectTrigger className="w-full md:w-[300px]">
             <SelectValue placeholder="Select hotel" />
           </SelectTrigger>
           <SelectContent>
@@ -60,6 +66,17 @@ export function PaceDashboard({ hotels, initialHotelId, occupancy, ourRate, comp
           </SelectContent>
         </Select>
       </div>
+
+      {hotels.length === 0 ? (
+        <div className="rounded-lg border-2 border-dashed p-10 text-center">
+          <Building2 className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
+          <p className="text-sm font-medium">No active hotels available</p>
+          <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+            Pace data will appear once an active hotel is assigned.
+          </p>
+        </div>
+      ) : (
+        <>
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -101,18 +118,18 @@ export function PaceDashboard({ hotels, initialHotelId, occupancy, ourRate, comp
           {chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height={350}>
               <BarChart data={chartData} margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
+                <XAxis dataKey="date" tick={{ fontSize: 11, fill: chartColors.axis }} />
+                <YAxis tick={{ fontSize: 11, fill: chartColors.axis }} />
                 <Tooltip
                   content={({ active, payload, label }) => {
                     if (!active || !payload?.length) return null;
                     const data = payload[0]?.payload;
                     return (
-                      <div className="bg-white border rounded-lg shadow-lg p-3 text-xs space-y-1">
+                      <div className="bg-popover text-popover-foreground border rounded-lg shadow-lg p-3 text-xs space-y-1">
                         <p className="font-semibold">{label}</p>
                         <p className="text-blue-600">OTB: {data?.otbRooms ?? "—"} rooms</p>
-                        <p className="text-slate-500">OTB LY: {data?.otbLyRooms ?? "—"} rooms</p>
+                        <p className="text-muted-foreground">OTB LY: {data?.otbLyRooms ?? "—"} rooms</p>
                         {data?.pace !== null && (
                           <p className={data.pace >= 0 ? "text-emerald-600" : "text-red-500"}>
                             Pace: {data.pace >= 0 ? "+" : ""}{data.pace}%
@@ -123,8 +140,8 @@ export function PaceDashboard({ hotels, initialHotelId, occupancy, ourRate, comp
                   }}
                 />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="otbRooms" fill="#2563eb" name="OTB Rooms" barSize={12} />
-                <Bar dataKey="otbLyRooms" fill="#94a3b8" name="OTB LY Rooms" barSize={12} />
+                <Bar dataKey="otbRooms" fill={chartColors.primary} name="OTB Rooms" barSize={12} />
+                <Bar dataKey="otbLyRooms" fill={chartColors.comparison} name="OTB LY Rooms" barSize={12} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
@@ -167,6 +184,8 @@ export function PaceDashboard({ hotels, initialHotelId, occupancy, ourRate, comp
             </div>
           </CardContent>
         </Card>
+      )}
+        </>
       )}
     </div>
   );

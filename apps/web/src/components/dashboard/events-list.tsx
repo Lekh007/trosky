@@ -67,16 +67,30 @@ export function EventsList({
     if (!form.title || !form.date || !form.hotelId) return;
     setSaving(true);
     try {
-      await createEvent({
+      const event = await createEvent({
         hotelId: form.hotelId,
         date: form.date,
         title: form.title,
         notes: form.notes || undefined,
       });
+      const hotelName =
+        hotels.find((hotel) => hotel.id === form.hotelId)?.name || "";
+      setEvents((prev) =>
+        [
+          ...prev,
+          {
+            id: event.id,
+            hotelId: form.hotelId,
+            hotelName,
+            date: form.date,
+            title: form.title,
+            notes: form.notes || null,
+          },
+        ].sort((a, b) => a.date.localeCompare(b.date))
+      );
       toast({ title: "Event created" });
       setShowAdd(false);
       setForm({ hotelId: hotels[0]?.id || "", date: "", title: "", notes: "" });
-      window.location.reload();
     } catch (e: any) {
       toast({ title: "Error", description: e.message, variant: "destructive" });
     } finally {

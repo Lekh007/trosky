@@ -12,10 +12,11 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { chartColors } from "@/lib/chart-colors";
 
 /**
  * Interactive Competitive Rate Comparison — matches app behavior.
- * Prices in cents; occupancy 0–100. App colors: #2563eb, #16a34a, #64748b, #e2e8f0.
+ * Prices in cents; occupancy 0–100.
  */
 const FULL_MOCK_DATA = [
   { dateLabel: "Mar 18", "Your Hotel": 11200, "Comp Avg": 10800, Recommended: 11500, Occupancy: 72 },
@@ -34,25 +35,18 @@ const FULL_MOCK_DATA = [
   { dateLabel: "Mar 31", "Your Hotel": 11400, "Comp Avg": 11000, Recommended: 11600, Occupancy: 62 },
 ];
 
-const APP_COLORS = {
-  yourHotel: "#2563eb",
-  compAvg: "#64748b",
-  recommended: "#16a34a",
-  occupancyFill: "#e2e8f0",
-};
-
 function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ name: string; value: number; color: string }>; label?: string }) {
   if (!active || !payload?.length || !label) return null;
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-lg text-xs min-w-[160px]">
-      <p className="font-semibold text-slate-900 mb-2">{label}</p>
+    <div className="rounded-lg border bg-popover p-3 shadow-lg text-xs min-w-[160px] text-popover-foreground">
+      <p className="font-semibold mb-2">{label}</p>
       {payload.map((entry) => (
         <div key={entry.name} className="flex items-center justify-between gap-3 py-0.5">
           <div className="flex items-center gap-1.5">
             <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: entry.color }} />
-            <span className="text-slate-500">{entry.name}</span>
+            <span className="text-muted-foreground">{entry.name}</span>
           </div>
-          <span className="font-medium text-slate-900">
+          <span className="font-medium">
             {entry.name === "Occupancy" ? `${Math.round(entry.value)}%` : `$${Math.round(entry.value / 100)}`}
           </span>
         </div>
@@ -74,10 +68,10 @@ export function HeroChart() {
   const barSize = graphRange > 14 ? 8 : 14;
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-lg">
+    <div className="rounded-xl border bg-card p-3 shadow-lg">
       <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-900">Competitive Rate Comparison</h3>
-        <div className="flex rounded-md border border-slate-200 bg-slate-50 p-0.5" role="tablist" aria-label="Date range">
+        <h3 className="text-sm font-semibold">Competitive Rate Comparison</h3>
+        <div className="flex rounded-md border bg-muted p-0.5" role="tablist" aria-label="Date range">
           {RANGES.map((days) => (
             <button
               key={days}
@@ -88,7 +82,7 @@ export function HeroChart() {
               className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
                 graphRange === days
                   ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               }`}
             >
               {days} Days
@@ -99,11 +93,11 @@ export function HeroChart() {
       <div className="h-[220px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={chartData} margin={{ top: 5, right: 8, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-            <XAxis dataKey="dateLabel" tick={{ fontSize: 10, fill: "#64748b" }} tickLine={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
+            <XAxis dataKey="dateLabel" tick={{ fontSize: 10, fill: chartColors.axis }} tickLine={false} />
             <YAxis
               yAxisId="price"
-              tick={{ fontSize: 10, fill: "#64748b" }}
+              tick={{ fontSize: 10, fill: chartColors.axis }}
               tickLine={false}
               tickFormatter={(v) => `$${Math.round(v / 100)}`}
               width={42}
@@ -111,7 +105,7 @@ export function HeroChart() {
             <YAxis
               yAxisId="occ"
               orientation="right"
-              tick={{ fontSize: 10, fill: "#64748b" }}
+              tick={{ fontSize: 10, fill: chartColors.axis }}
               tickLine={false}
               tickFormatter={(v) => `${v}%`}
               width={32}
@@ -122,7 +116,7 @@ export function HeroChart() {
             <Bar
               yAxisId="occ"
               dataKey="Occupancy"
-              fill={APP_COLORS.occupancyFill}
+              fill={chartColors.occupancy}
               opacity={0.5}
               radius={[2, 2, 0, 0]}
               barSize={barSize}
@@ -132,9 +126,9 @@ export function HeroChart() {
               yAxisId="price"
               type="monotone"
               dataKey="Your Hotel"
-              stroke={APP_COLORS.yourHotel}
+              stroke={chartColors.primary}
               strokeWidth={2}
-              dot={{ r: 2.5, fill: APP_COLORS.yourHotel }}
+              dot={{ r: 2.5, fill: chartColors.primary }}
               connectNulls
               name="Your Hotel"
             />
@@ -142,7 +136,7 @@ export function HeroChart() {
               yAxisId="price"
               type="monotone"
               dataKey="Comp Avg"
-              stroke={APP_COLORS.compAvg}
+              stroke={chartColors.comparison}
               strokeWidth={1.25}
               strokeDasharray="4 4"
               dot={false}
@@ -153,7 +147,7 @@ export function HeroChart() {
               yAxisId="price"
               type="monotone"
               dataKey="Recommended"
-              stroke={APP_COLORS.recommended}
+              stroke={chartColors.recommended}
               strokeWidth={1.5}
               strokeDasharray="6 3"
               dot={false}
@@ -163,7 +157,7 @@ export function HeroChart() {
           </ComposedChart>
         </ResponsiveContainer>
       </div>
-      <p className="mt-1 text-center text-[10px] text-slate-500">
+      <p className="mt-1 text-center text-[10px] text-muted-foreground">
         Same chart as in the dashboard · Switch range to see 7, 14, or 30 days
       </p>
     </div>

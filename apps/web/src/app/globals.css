@@ -24,6 +24,20 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
+    --chart-grid: 214.3 31.8% 91.4%;
+    --chart-axis: 215.4 16.3% 46.9%;
+    --chart-primary: 221.2 83.2% 53.3%;
+    --chart-comparison: 215.4 16.3% 46.9%;
+    --chart-recommended: 160 84% 39%;
+    --chart-occupancy: 263 70% 72%;
+    --chart-warning: 38 92% 50%;
+    --chart-series-1: 215 20% 55%;
+    --chart-series-2: 263 70% 64%;
+    --chart-series-3: 24 95% 53%;
+    --chart-series-4: 173 80% 40%;
+    --chart-series-5: 348 83% 58%;
+    --chart-series-6: 258 90% 66%;
+    --chart-series-7: 190 90% 48%;
     /* Landing accents */
     --landing-emerald: 160 84% 39%;
     --landing-amber: 38 92% 50%;
@@ -39,6 +53,51 @@
     --landing-muted: 215.4 16.3% 46.9%;
     --landing-border: 214.3 31.8% 91.4%;
     --landing-card: 0 0% 100%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 47.4% 7.5%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 47.4% 7.5%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 45.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+    --chart-grid: 217.2 32.6% 20%;
+    --chart-axis: 215 20.2% 65.1%;
+    --chart-primary: 217.2 91.2% 64%;
+    --chart-comparison: 215 20.2% 65.1%;
+    --chart-recommended: 160 84% 45%;
+    --chart-occupancy: 263 70% 65%;
+    --chart-warning: 38 92% 55%;
+    --chart-series-1: 215 20.2% 65.1%;
+    --chart-series-2: 263 70% 70%;
+    --chart-series-3: 24 95% 60%;
+    --chart-series-4: 173 80% 50%;
+    --chart-series-5: 348 83% 65%;
+    --chart-series-6: 258 90% 72%;
+    --chart-series-7: 190 90% 58%;
+  }
+
+  .dark .landing-page {
+    --landing-bg: 222.2 84% 4.9%;
+    --landing-bg-elevated: 222.2 47.4% 7.5%;
+    --landing-foreground: 210 40% 98%;
+    --landing-muted: 215 20.2% 65.1%;
+    --landing-border: 217.2 32.6% 17.5%;
+    --landing-card: 222.2 47.4% 7.5%;
   }
 }
 
@@ -66,7 +125,7 @@
 
   /* Landing: background and surface utilities (use inside .landing-page) */
   .landing-bg {
-    background: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(210 40% 98.5%) 50%, hsl(210 35% 97%) 100%);
+    background: linear-gradient(180deg, hsl(var(--landing-bg)) 0%, hsl(var(--landing-bg-elevated)) 55%, hsl(var(--landing-bg)) 100%);
   }
   .landing-bg-elevated {
     background-color: hsl(var(--landing-bg-elevated));
