@@ -26,8 +26,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const debugSecret = process.env.DEBUG_LOGIN_SECRET;
-
   try {
     const body = await request.json();
     const parsed = loginSchema.safeParse(body);
@@ -92,13 +90,6 @@ export async function POST(request: NextRequest) {
     const stack = error instanceof Error ? error.stack : undefined;
     console.error("Login error:", message, stack ?? error);
 
-    const body: { error: string; debug?: string } = {
-      error: "Internal server error",
-    };
-    if (debugSecret && request.headers.get("x-debug-login") === debugSecret) {
-      body.debug = message;
-    }
-
-    return NextResponse.json(body, { status: 500 });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

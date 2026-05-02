@@ -28,7 +28,7 @@ export default async function PacePage({
 
   const hotelId = searchParams.hotelId || hotels[0]?.id;
   
-  let occupancy: any[] = [];
+  let occupancy: Awaited<ReturnType<typeof prisma.occupancyEntry.findMany>> = [];
   let compAvgRate: number | null = null;
   let ourRate: number | null = null;
 

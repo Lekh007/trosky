@@ -34,7 +34,7 @@ export default async function EventsPage() {
       events={events.map((e) => ({
         id: e.id,
         hotelId: e.hotelId,
-        hotelName: (e as any).hotel?.name || "",
+        hotelName: e.hotel?.name || "",
         date: e.date.toISOString().split("T")[0],
         title: e.title,
         notes: e.notes,

@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "dev-jwt-secret"
+  process.env.JWT_SECRET || (process.env.NODE_ENV === "production" ? (() => { throw new Error("JWT_SECRET is required in production"); })() : "dev-jwt_secret-unsafe")
 );
 
 const publicPaths = ["/", "/login", "/api/auth/login", "/api/auth/refresh", "/api/health"];
@@ -15,10 +15,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (pathname.startsWith("/api/") || pathname.startsWith("/_next/") || pathname === "/favicon.ico") {
-    if (pathname.startsWith("/_next/") || pathname === "/favicon.ico") {
-      return NextResponse.next();
-    }
+  if (pathname.startsWith("/_next/") || pathname === "/favicon.ico") {
+    return NextResponse.next();
   }
 
   const accessToken = request.cookies.get("access_token")?.value;
@@ -32,7 +30,11 @@ export async function middleware(request: NextRequest) {
 
   try {
     await jwtVerify(accessToken, JWT_SECRET);
-    return NextResponse.next();
+    const response = NextResponse.next();
+    response.headers.set("X-Content-Type-Options", "nosniff");
+    response.headers.set("X-Frame-Options", "DENY");
+    response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+    return response;
   } catch {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Token expired" }, { status: 401 });

@@ -8,8 +8,18 @@ export async function POST(
   { params }: { params: { hotelId: string } }
 ) {
   const session = await getSession();
-  if (!session || session.role !== "ANALYST") {
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (session.role !== "ANALYST") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { hotelId } = params;
+  const { prisma } = await import("@hotel-pricing/db");
+  const hotel = await prisma.hotel.findUnique({ where: { id: hotelId }, select: { id: true } });
+  if (!hotel) {
+    return NextResponse.json({ error: "Hotel not found" }, { status: 404 });
   }
 
   const redisUrl = process.env.REDIS_URL;
@@ -41,7 +51,8 @@ export async function POST(
       jobId: job.id,
       message: "Refresh job queued for hotel",
     });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to queue refresh";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

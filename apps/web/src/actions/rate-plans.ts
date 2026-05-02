@@ -18,7 +18,7 @@ export async function createRatePlan(data: {
   name: string;
   discountPercent: number;
 }) {
-  await requireAnalyst();
+  await requireHotelAccess(data.hotelId);
   const plan = await prisma.ratePlan.create({
     data: {
       hotelId: data.hotelId,

@@ -86,11 +86,13 @@ export default function LoginPage() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Signing in..." : "Sign In"}
             </Button>
-            <div className="text-xs text-muted-foreground text-center space-y-1">
-              <p>Demo accounts: FOR NOW ONLY WORK ON LOCALHOST</p>
-              <p>analyst@example.com / Password123!</p>
-              <p>client@example.com / Password123!</p>
-            </div>
+            {process.env.NEXT_PUBLIC_SHOW_DEMO_CREDENTIALS === "true" && (
+              <div className="text-xs text-muted-foreground text-center space-y-1">
+                <p>Demo accounts (development only)</p>
+                <p>analyst@example.com / Password123!</p>
+                <p>client@example.com / Password123!</p>
+              </div>
+            )}
           </form>
         </CardContent>
       </Card>

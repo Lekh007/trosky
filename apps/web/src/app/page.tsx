@@ -4,7 +4,7 @@ import { jwtVerify } from "jose";
 import { LandingPage } from "@/components/landing/landing-page";
 
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "dev-jwt-secret"
+  process.env.JWT_SECRET || (process.env.NODE_ENV === "production" ? (() => { throw new Error("JWT_SECRET is required in production"); })() : "dev-jwt_secret-unsafe")
 );
 
 export const metadata = {

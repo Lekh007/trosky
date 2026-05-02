@@ -15,7 +15,8 @@ export async function GET() {
       await prisma.$queryRaw`SELECT 1`;
       db = "ok";
     } catch (e) {
-      dbMessage = e instanceof Error ? e.message : String(e);
+      console.error("Health check DB error:", e instanceof Error ? e.message : e);
+      dbMessage = "Database connection failed";
     }
   }
 

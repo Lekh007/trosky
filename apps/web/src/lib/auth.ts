@@ -2,12 +2,19 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import type { JWTPayload } from "@hotel-pricing/shared";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "dev-jwt-secret"
-);
-const JWT_REFRESH_SECRET = new TextEncoder().encode(
-  process.env.JWT_REFRESH_SECRET || "dev-refresh-secret"
-);
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(`Missing required environment variable: ${name}`);
+    }
+    return `dev-${name.toLowerCase()}-unsafe`;
+  }
+  return value;
+}
+
+const JWT_SECRET = new TextEncoder().encode(requireEnv("JWT_SECRET"));
+const JWT_REFRESH_SECRET = new TextEncoder().encode(requireEnv("JWT_REFRESH_SECRET"));
 
 const ACCESS_TOKEN_TTL = "15m";
 const REFRESH_TOKEN_TTL = "7d";

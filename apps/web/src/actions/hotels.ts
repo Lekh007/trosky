@@ -6,14 +6,21 @@ import { requireAnalyst, requireHotelAccess } from "@/lib/rbac";
 import { revalidatePath } from "next/cache";
 
 export async function getHotels() {
-  const session = await requireHotelAccess("").catch(() => null);
+  const { getSession } = await import("@/lib/auth");
+  const session = await getSession();
   if (!session) {
-    return prisma.hotel.findMany({
-      where: { status: "ACTIVE" },
-      orderBy: { name: "asc" },
-    });
+    throw new Error("UNAUTHORIZED");
   }
-  return prisma.hotel.findMany({ orderBy: { name: "asc" } });
+  if (session.role === "ANALYST") {
+    return prisma.hotel.findMany({ orderBy: { name: "asc" } });
+  }
+  return prisma.hotel.findMany({
+    where: {
+      status: "ACTIVE",
+      access: { some: { userId: session.sub } },
+    },
+    orderBy: { name: "asc" },
+  });
 }
 
 export async function getHotelById(id: string) {
@@ -123,20 +130,34 @@ export async function addCompetitorToHotel(data: {
     competitor = await prisma.competitor.create({ data: { name: data.name } });
   }
 
-  await prisma.competitorListing.upsert({
-    where: { id: "check" },
-    create: { competitorId: competitor.id, ota: "EXPEDIA", url: data.expediaUrl },
-    update: { url: data.expediaUrl },
-  }).catch(async () => {
-    await prisma.competitorListing.create({
-      data: { competitorId: competitor!.id, ota: "EXPEDIA", url: data.expediaUrl },
-    });
+  const existingListing = await prisma.competitorListing.findFirst({
+    where: { competitorId: competitor.id, ota: "EXPEDIA" },
   });
+  if (existingListing) {
+    await prisma.competitorListing.update({
+      where: { id: existingListing.id },
+      data: { url: data.expediaUrl },
+    });
+  } else {
+    await prisma.competitorListing.create({
+      data: { competitorId: competitor.id, ota: "EXPEDIA", url: data.expediaUrl },
+    });
+  }
 
   if (data.bookingUrl) {
-    await prisma.competitorListing.create({
-      data: { competitorId: competitor.id, ota: "BOOKING", url: data.bookingUrl },
-    }).catch(() => {});
+    const existingBooking = await prisma.competitorListing.findFirst({
+      where: { competitorId: competitor.id, ota: "BOOKING" },
+    });
+    if (existingBooking) {
+      await prisma.competitorListing.update({
+        where: { id: existingBooking.id },
+        data: { url: data.bookingUrl },
+      });
+    } else {
+      await prisma.competitorListing.create({
+        data: { competitorId: competitor.id, ota: "BOOKING", url: data.bookingUrl },
+      });
+    }
   }
 
   await prisma.hotelCompetitor.upsert({

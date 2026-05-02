@@ -19,7 +19,7 @@ export default async function OccupancyPage({
 
   const hotelId = searchParams.hotelId || hotels[0]?.id;
   
-  let occupancyData: any[] = [];
+  let occupancyData: Awaited<ReturnType<typeof prisma.occupancyEntry.findMany>> = [];
   if (hotelId) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
